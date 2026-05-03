@@ -1,0 +1,69 @@
+:root {
+  /* Ocean palette — site-wide */
+  --ocean-navy: #093c5d;
+  --ocean-blue: #3b7597;
+  --ocean-turquoise: #6fd1d7;
+  --ocean-mint: #5df8d8;
+
+  --rgb-navy: 9, 60, 93;
+  --rgb-blue: 59, 117, 151;
+  --rgb-tq: 111, 209, 215;
+  --rgb-mint: 93, 248, 216;
+
+  --bg: #051520;
+  --bg-soft: #0a2330;
+  --card: #0c2a3a;
+  --line: #1e4f66;
+  --line-strong: #2a6a85;
+
+  /* Semantic accents (legacy names map to ocean) */
+  --gold: var(--ocean-turquoise);
+  --gold-strong: var(--ocean-mint);
+
+  --heading: #e8f8fa;
+  --text: #a3cad4;
+  --muted: #6799a8;
+
+  --surface-a: 12, 48, 65;
+  --surface-b: 5, 24, 34;
+
+  --font: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background:
+    radial-gradient(ellipse 120% 80% at 15% -15%, rgba(var(--rgb-blue), 0.35), transparent 52%),
+    radial-gradient(ellipse 90% 60% at 90% 25%, rgba(var(--rgb-navy), 0.45), transparent 48%),
+    linear-gradient(180deg, #041018 0%, var(--bg) 45%, #020a10 100%);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

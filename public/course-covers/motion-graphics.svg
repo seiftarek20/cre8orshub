@@ -1,0 +1,20 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#121110"/>
+  <rect x="130" y="120" width="1660" height="840" rx="40" fill="url(#bg)"/>
+  <circle cx="630" cy="520" r="200" stroke="#C8A66B" stroke-width="12"/>
+  <circle cx="630" cy="520" r="145" stroke="#A88755" stroke-width="10"/>
+  <circle cx="630" cy="520" r="92" fill="#C8A66B"/>
+  <rect x="1000" y="300" width="220" height="220" rx="24" fill="#2D271F" stroke="#8B7048" stroke-width="3"/>
+  <rect x="1260" y="300" width="220" height="220" rx="24" fill="#2D271F" stroke="#8B7048" stroke-width="3"/>
+  <rect x="1520" y="300" width="160" height="220" rx="24" fill="#2D271F" stroke="#8B7048" stroke-width="3"/>
+  <rect x="1000" y="560" width="680" height="32" rx="10" fill="#2F2821"/>
+  <rect x="1000" y="618" width="530" height="32" rx="10" fill="#2F2821"/>
+  <rect x="1000" y="676" width="590" height="32" rx="10" fill="#2F2821"/>
+  <text x="250" y="820" fill="#EDE2D1" font-family="Segoe UI, Arial, sans-serif" font-size="78" font-weight="700">Motion Graphics</text>
+  <defs>
+    <linearGradient id="bg" x1="130" y1="120" x2="1790" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#30261C"/>
+      <stop offset="1" stop-color="#181412"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,18 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#121110"/>
+  <rect x="130" y="120" width="1660" height="840" rx="40" fill="url(#bg)"/>
+  <rect x="260" y="260" width="760" height="420" rx="28" fill="#1F1B18" stroke="#7A6140" stroke-width="3"/>
+  <rect x="1080" y="260" width="580" height="60" rx="14" fill="#2A2420"/>
+  <rect x="1080" y="360" width="460" height="42" rx="12" fill="#2A2420"/>
+  <rect x="1080" y="430" width="520" height="42" rx="12" fill="#2A2420"/>
+  <rect x="1080" y="500" width="390" height="42" rx="12" fill="#2A2420"/>
+  <circle cx="610" cy="470" r="128" fill="#C8A66B"/>
+  <polygon points="575,405 575,535 690,470" fill="#171412"/>
+  <text x="260" y="760" fill="#EDE2D1" font-family="Segoe UI, Arial, sans-serif" font-size="78" font-weight="700">Video Editing</text>
+  <defs>
+    <linearGradient id="bg" x1="130" y1="120" x2="1790" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2B231A"/>
+      <stop offset="1" stop-color="#171412"/>
+    </linearGradient>
+  </defs>
+</svg>

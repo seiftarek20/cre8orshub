@@ -1,0 +1,20 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#121110"/>
+  <rect x="130" y="120" width="1660" height="840" rx="40" fill="url(#bg)"/>
+  <rect x="250" y="240" width="1420" height="560" rx="34" fill="#1D1916" stroke="#7B6342" stroke-width="3"/>
+  <rect x="320" y="310" width="520" height="420" rx="24" fill="#2A231D"/>
+  <rect x="890" y="310" width="710" height="84" rx="18" fill="#2A231D"/>
+  <rect x="890" y="430" width="620" height="56" rx="14" fill="#2A231D"/>
+  <rect x="890" y="516" width="660" height="56" rx="14" fill="#2A231D"/>
+  <rect x="890" y="602" width="500" height="56" rx="14" fill="#2A231D"/>
+  <path d="M430 450L520 390L610 450L610 560L520 620L430 560V450Z" fill="#C8A66B"/>
+  <path d="M520 420V590" stroke="#171412" stroke-width="20" stroke-linecap="round"/>
+  <path d="M455 510H585" stroke="#171412" stroke-width="20" stroke-linecap="round"/>
+  <text x="250" y="900" fill="#EDE2D1" font-family="Segoe UI, Arial, sans-serif" font-size="72" font-weight="700">AI Video Making</text>
+  <defs>
+    <linearGradient id="bg" x1="130" y1="120" x2="1790" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#31271E"/>
+      <stop offset="1" stop-color="#181412"/>
+    </linearGradient>
+  </defs>
+</svg>
