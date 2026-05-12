@@ -52,6 +52,11 @@ function Home() {
           <p className="hero-description" dir="rtl">
             هنا بتتعلّم تشوف، ترتّب، وتحرّك الفكرة — لحد ما تبقى شغل يستحق يتشاف.
           </p>
+          <div className="hero-proof" aria-label="Cre8ors Hub learning highlights">
+            <span>Cinematic craft</span>
+            <span>Guided projects</span>
+            <span>Portfolio-ready output</span>
+          </div>
           <div className="hero-actions">
             <Link className="btn btn-primary" to="/#courses">
               Explore Courses
