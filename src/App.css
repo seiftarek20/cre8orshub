@@ -1,6 +1,11 @@
 .app-shell {
   position: relative;
   width: 100%;
+  --lux-gold: #d7b56d;
+  --lux-gold-soft: #f0dca3;
+  --lux-gold-rgb: 215, 181, 109;
+  --lux-charcoal: #050607;
+  --lux-panel: rgba(10, 14, 17, 0.82);
 }
 
 main {
@@ -139,6 +144,31 @@ main {
 .nav-links a:hover,
 .nav-links .active {
   color: var(--gold-strong);
+}
+
+.nav-links a {
+  position: relative;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: -0.45rem;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(var(--lux-gold-rgb), 0.88), transparent);
+  box-shadow: 0 0 14px rgba(var(--lux-gold-rgb), 0.38);
+  opacity: 0;
+  transition: left 0.28s ease, right 0.28s ease, opacity 0.28s ease;
+}
+
+.nav-links a:hover::after,
+.nav-links .active::after {
+  left: 0;
+  right: 0;
+  opacity: 1;
 }
 
 .section-block {
@@ -435,7 +465,8 @@ p {
   border-color: rgba(var(--rgb-tq), 0.38);
   box-shadow:
     0 18px 34px rgba(0, 0, 0, 0.34),
-    0 0 0 1px rgba(var(--rgb-tq), 0.08);
+    0 0 0 1px rgba(var(--rgb-tq), 0.08),
+    0 0 34px rgba(var(--lux-gold-rgb), 0.08);
 }
 
 .course-card-cover {
@@ -466,7 +497,7 @@ p {
   inset: 0;
   background:
     linear-gradient(180deg, transparent 34%, rgba(2, 10, 15, 0.88) 100%),
-    linear-gradient(125deg, rgba(var(--rgb-tq), 0.34), transparent 36%);
+    linear-gradient(125deg, rgba(var(--lux-gold-rgb), 0.2), transparent 36%);
   pointer-events: none;
 }
 
@@ -2297,5 +2328,501 @@ p {
 @media (max-width: 992px) {
   .curriculum-sticky-cta {
     position: static;
+  }
+}
+
+/* Premium app workspace */
+.app-page {
+  position: relative;
+  min-height: calc(100svh - 5rem);
+}
+
+.app-page::before {
+  content: '';
+  position: fixed;
+  inset: 4.25rem 0 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 48% 42% at 72% 18%, rgba(var(--lux-gold-rgb), 0.13), transparent 62%),
+    radial-gradient(ellipse 42% 34% at 18% 38%, rgba(var(--rgb-tq), 0.11), transparent 64%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.24), transparent 44%);
+  opacity: 0.92;
+  animation: appAura 18s ease-in-out infinite alternate;
+}
+
+.app-layout {
+  width: min(1380px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 245px minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 1.35rem);
+  align-items: start;
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 6rem;
+  min-height: 520px;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.18);
+  border-radius: 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
+    linear-gradient(155deg, rgba(10, 14, 17, 0.86), rgba(4, 12, 17, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 44px rgba(0, 0, 0, 0.32);
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.app-sidebar::before,
+.app-card::before,
+.app-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(120deg, transparent, rgba(var(--lux-gold-rgb), 0.16), transparent);
+  background-size: 220% 100%;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  animation: appBorderFlow 8s linear infinite;
+}
+
+.app-sidebar:hover::before,
+.app-card:hover::before,
+.app-header:hover::before {
+  opacity: 1;
+}
+
+.app-sidebar-mark {
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 0.9rem;
+  display: grid;
+  place-items: center;
+  color: var(--lux-gold-soft);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background:
+    radial-gradient(circle at 35% 20%, rgba(var(--lux-gold-rgb), 0.34), transparent 54%),
+    rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.28);
+  box-shadow: 0 0 26px rgba(var(--lux-gold-rgb), 0.1);
+  margin-bottom: 1.2rem;
+}
+
+.app-sidebar-nav,
+.app-mobile-nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.app-sidebar-nav a,
+.app-mobile-nav a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 2.65rem;
+  border-radius: 0.78rem;
+  padding: 0.72rem 0.8rem;
+  color: rgba(232, 248, 250, 0.62);
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: color 0.28s ease, background 0.28s ease, border-color 0.28s ease, transform 0.28s ease;
+}
+
+.app-sidebar-nav a:hover,
+.app-mobile-nav a:hover {
+  color: var(--heading);
+  background: rgba(var(--lux-gold-rgb), 0.07);
+  transform: translateX(2px);
+}
+
+.app-sidebar-nav a.active,
+.app-mobile-nav a.active {
+  color: var(--lux-gold-soft);
+  background: linear-gradient(90deg, rgba(var(--lux-gold-rgb), 0.13), rgba(var(--rgb-tq), 0.05));
+  box-shadow: inset 0 0 0 1px rgba(var(--lux-gold-rgb), 0.16);
+}
+
+.app-sidebar-nav a.active::before {
+  content: '';
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  margin-right: 0.65rem;
+  background: var(--lux-gold);
+  box-shadow: 0 0 16px rgba(var(--lux-gold-rgb), 0.72);
+}
+
+.app-content {
+  min-width: 0;
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.3rem);
+}
+
+.app-header {
+  position: relative;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.16);
+  border-radius: 1.15rem;
+  padding: clamp(1.1rem, 2.4vw, 1.55rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 100% at 86% 18%, rgba(var(--lux-gold-rgb), 0.14), transparent 62%),
+    linear-gradient(155deg, rgba(13, 21, 25, 0.9), rgba(3, 10, 15, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 18px 42px rgba(0, 0, 0, 0.3);
+}
+
+.app-header h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  max-width: 12ch;
+  margin-bottom: 0.65rem;
+}
+
+.app-header p:not(.eyebrow) {
+  max-width: 62ch;
+  color: rgba(163, 202, 212, 0.82);
+}
+
+.app-header-action {
+  flex: 0 0 auto;
+}
+
+.app-mobile-nav {
+  display: none;
+}
+
+.app-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.6vw, 1rem);
+}
+
+.app-card {
+  position: relative;
+  grid-column: span 4;
+  min-height: 220px;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.14);
+  border-radius: 1rem;
+  padding: 1.05rem;
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 34%),
+    linear-gradient(158deg, rgba(10, 18, 23, 0.9), rgba(3, 10, 14, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 12px 30px rgba(0, 0, 0, 0.24);
+  transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
+}
+
+.app-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(var(--lux-gold-rgb), 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 18px 38px rgba(0, 0, 0, 0.32),
+    0 0 34px rgba(var(--lux-gold-rgb), 0.07);
+}
+
+.app-card-feature {
+  grid-column: span 8;
+  min-height: 260px;
+  background:
+    radial-gradient(ellipse 70% 100% at 92% 12%, rgba(var(--lux-gold-rgb), 0.17), transparent 62%),
+    linear-gradient(158deg, rgba(11, 26, 31, 0.92), rgba(3, 10, 14, 0.96));
+}
+
+.app-card-header {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.app-card-eyebrow {
+  color: var(--lux-gold);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.app-card h2 {
+  font-size: clamp(1.16rem, 1.8vw, 1.45rem);
+  line-height: 1.16;
+}
+
+.app-card p,
+.app-list-row span,
+.app-mini-course span,
+.app-card-footer span {
+  color: rgba(163, 202, 212, 0.78);
+}
+
+.app-muted {
+  color: rgba(163, 202, 212, 0.58) !important;
+}
+
+.app-progress-bar {
+  width: 100%;
+  height: 0.52rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 0 0 1px rgba(var(--lux-gold-rgb), 0.1);
+}
+
+.app-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--lux-gold), var(--ocean-turquoise));
+  box-shadow: 0 0 18px rgba(var(--lux-gold-rgb), 0.24);
+  transition: width 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-meta-list,
+.app-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.app-meta-list span,
+.app-card-footer span,
+.app-card-footer strong {
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.14);
+  border-radius: 999px;
+  padding: 0.4rem 0.6rem;
+  background: rgba(0, 0, 0, 0.18);
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.app-card-footer {
+  justify-content: space-between;
+  align-self: end;
+}
+
+.app-card-footer strong {
+  color: var(--lux-gold-soft);
+}
+
+.app-list,
+.app-mini-course-list,
+.app-activity-list {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.app-list-row,
+.app-mini-course {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid rgba(var(--rgb-tq), 0.12);
+  border-radius: 0.78rem;
+  padding: 0.72rem;
+  background: rgba(0, 0, 0, 0.18);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.app-list-row:hover,
+.app-mini-course:hover {
+  border-color: rgba(var(--lux-gold-rgb), 0.24);
+  background: rgba(var(--lux-gold-rgb), 0.045);
+}
+
+.app-list-row div,
+.app-mini-course div {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.app-list-row strong,
+.app-mini-course strong {
+  color: var(--heading);
+  font-size: 0.94rem;
+}
+
+.app-list-row em {
+  color: var(--lux-gold-soft);
+  font-style: normal;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.app-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.6vw, 1rem);
+}
+
+.app-course-card,
+.app-project-card {
+  grid-column: auto;
+  min-height: 280px;
+}
+
+.app-project-preview {
+  min-height: 128px;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.16);
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(var(--lux-gold-rgb), 0.18), transparent 38%),
+    radial-gradient(circle at 72% 26%, rgba(var(--rgb-tq), 0.18), transparent 36%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2));
+}
+
+.app-project-preview span {
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
+  transform: skewX(-12deg) translateX(-120%);
+  animation: appSoftSweep 6s ease-in-out infinite;
+}
+
+.app-roadmap-panel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.app-roadmap-panel .app-card {
+  grid-column: auto;
+  min-height: 0;
+}
+
+@keyframes appAura {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(0, -10px, 0) scale(1.02);
+  }
+}
+
+@keyframes appBorderFlow {
+  from {
+    background-position: 160% 0;
+  }
+
+  to {
+    background-position: -60% 0;
+  }
+}
+
+@keyframes appSoftSweep {
+  0%,
+  42% {
+    transform: skewX(-12deg) translateX(-130%);
+  }
+
+  70%,
+  100% {
+    transform: skewX(-12deg) translateX(330%);
+  }
+}
+
+@media (max-width: 1050px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    display: none;
+  }
+
+  .app-mobile-nav {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+    scrollbar-width: none;
+  }
+
+  .app-mobile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-mobile-nav a {
+    flex: 0 0 auto;
+    border: 1px solid rgba(var(--lux-gold-rgb), 0.13);
+    background: rgba(0, 0, 0, 0.16);
+  }
+
+  .app-dashboard-grid,
+  .app-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-card,
+  .app-card-feature {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-page {
+    padding-inline: 0.85rem;
+  }
+
+  .app-header {
+    display: grid;
+  }
+
+  .app-header h1 {
+    max-width: none;
+  }
+
+  .app-header-action,
+  .app-header-action .btn {
+    width: 100%;
+  }
+
+  .app-dashboard-grid,
+  .app-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .app-card {
+    min-height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-page::before,
+  .app-sidebar::before,
+  .app-card::before,
+  .app-header::before,
+  .app-project-preview span {
+    animation: none;
+  }
+
+  .app-card,
+  .app-sidebar-nav a,
+  .app-mobile-nav a,
+  .app-progress-bar span {
+    transition: none;
+  }
+
+  .app-card:hover,
+  .app-sidebar-nav a:hover,
+  .app-mobile-nav a:hover {
+    transform: none;
   }
 }

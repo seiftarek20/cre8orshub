@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import BackToTop from './components/BackToTop.jsx';
 import SectionNav from './components/SectionNav.jsx';
@@ -11,16 +11,24 @@ import CourseDetails from './pages/CourseDetails.jsx';
 import Booking from './pages/Booking.jsx';
 import RoadmapPage from './pages/Roadmap.jsx';
 import StudentWork from './pages/StudentWork.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import MyCourses from './pages/MyCourses.jsx';
+import Projects from './pages/Projects.jsx';
+import Progress from './pages/Progress.jsx';
 import './App.css';
 
 function App() {
+  const location = useLocation();
+  const appRoutes = ['/dashboard', '/my-courses', '/projects', '/progress'];
+  const isAppRoute = appRoutes.includes(location.pathname);
+
   return (
     <div className="app-shell">
       <BackgroundAnimation />
       <Cursor />
       <ScrollRevealManager />
       <Navbar />
-      <SectionNav />
+      {!isAppRoute ? <SectionNav /> : null}
       <BackToTop />
       <main>
         <Routes>
@@ -30,6 +38,10 @@ function App() {
           <Route path="/roadmap" element={<RoadmapPage />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/student-work" element={<StudentWork />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/my-courses" element={<MyCourses />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/progress" element={<Progress />} />
         </Routes>
       </main>
     </div>

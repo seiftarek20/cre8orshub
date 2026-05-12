@@ -13,6 +13,7 @@ function Navbar() {
         <Link to="/#courses">Courses</Link>
         <Link to="/#roadmap">Roadmap</Link>
         <Link to="/#booking">Booking</Link>
+        <NavLink to="/dashboard">Dashboard</NavLink>
       </nav>
     </header>
   );
