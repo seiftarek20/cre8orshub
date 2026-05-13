@@ -1,8 +1,6 @@
-import { requireSupabaseClient } from '../lib/supabaseClient.js';
-
-// Phase 1 placeholder:
-// Add signup, login, logout, session, and password reset calls here when auth UI is implemented.
+// Phase 1 placeholder.
+// Real Supabase auth logic will be connected in later phases when login UI,
+// auth context, and protected routes are implemented.
 export async function getCurrentSession() {
-  const supabase = requireSupabaseClient();
-  return supabase.auth.getSession();
+  return null;
 }
