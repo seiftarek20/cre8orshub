@@ -3,8 +3,11 @@ import { NavLink } from 'react-router-dom';
 const appNavItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/my-courses', label: 'My Courses' },
+  { to: '/tasks', label: 'Tasks' },
+  { to: '/rewards', label: 'Rewards' },
   { to: '/projects', label: 'Projects' },
   { to: '/progress', label: 'Progress' },
+  { to: '/admin/tasks', label: 'Admin Tasks' },
 ];
 
 function AppLayout({ eyebrow, title, description, children, action }) {

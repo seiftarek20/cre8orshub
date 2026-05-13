@@ -56,30 +56,41 @@ const createShowcase = [
   {
     key: 'video',
     title: 'Video Editing',
-    subtitle: 'Short Ad Reel',
+    subtitle: 'SHORT AD REEL',
     description: 'Build a punchy ad reel with rhythm, sound design, and a signature cut style.',
-    imageAlt: 'Video editing preview',
+    mediaType: 'youtube',
+    youtubeId: '5-lNURT-swg',
+    url: 'https://www.youtube.com/shorts/5-lNURT-swg',
+    orientation: 'vertical',
   },
   {
     key: 'motion',
     title: 'Motion',
-    subtitle: 'Animated Story',
+    subtitle: 'ANIMATED STORY',
     description: 'Shape a short animated narrative with timing, typography, and layered motion.',
-    imageAlt: 'Motion graphics preview',
+    mediaType: 'youtube',
+    youtubeId: 'o-LqiGr9NQM',
+    url: 'https://www.youtube.com/shorts/o-LqiGr9NQM',
+    orientation: 'vertical',
   },
   {
     key: 'graphic',
     title: 'Graphic',
-    subtitle: 'Social Campaign',
+    subtitle: 'SOCIAL CAMPAIGN',
     description: 'Design a cohesive campaign system that feels premium across every post.',
-    imageAlt: 'Graphic design preview',
+    mediaType: 'image',
+    image: '/images/create/design-1.jpg',
+    orientation: 'vertical',
   },
   {
     key: 'ai',
     title: 'AI',
-    subtitle: 'AI Cinematic Scene',
+    subtitle: 'AI CINEMATIC SCENE',
     description: 'Direct an AI-assisted scene with mood, consistency, and a human finish.',
-    imageAlt: 'AI video preview',
+    mediaType: 'youtube',
+    youtubeId: 'm83Fpo7KN0E',
+    url: 'https://youtu.be/m83Fpo7KN0E',
+    orientation: 'horizontal',
   },
 ];
 
@@ -219,7 +230,33 @@ function CreativePathQuiz() {
   );
 }
 
+function CreateMediaPreview({ item, onPlay }) {
+  if (item.mediaType === 'youtube') {
+    return (
+      <button
+        className="he-create-media-button"
+        type="button"
+        onClick={() => onPlay(item)}
+        aria-label={`Play ${item.title} preview`}
+      >
+        <img
+          src={`https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`}
+          alt=""
+          loading="lazy"
+        />
+        <span className="he-create-play" aria-hidden="true">
+          <span />
+        </span>
+      </button>
+    );
+  }
+
+  return <img src={item.image} alt={`${item.title} preview`} loading="lazy" />;
+}
+
 export default function HomeEnhancements() {
+  const [activeCreateVideo, setActiveCreateVideo] = useState(null);
+
   return (
     <div className="home-enhancements">
       <section id="creative-quiz" className="section-block he-section anchor-section">
@@ -249,19 +286,59 @@ export default function HomeEnhancements() {
         </div>
         <div className="he-grid he-grid-4">
           {createShowcase.map((item) => (
-            <article key={item.key} className="he-glass he-card he-create-card reveal">
-              <div className="he-create-media" aria-label={item.imageAlt}>
-                <span className="he-create-placeholder-label">{item.subtitle}</span>
+            <article
+              key={item.key}
+              className={`he-glass he-card he-create-card he-create-${item.orientation} reveal`}
+            >
+              <div className="he-create-media">
+                <CreateMediaPreview item={item} onPlay={setActiveCreateVideo} />
               </div>
               <div className="he-create-body">
                 <h3>{item.title}</h3>
                 <p className="he-create-sub">{item.subtitle}</p>
                 <p>{item.description}</p>
+                {item.mediaType === 'youtube' ? (
+                  <a className="he-create-link" href={item.url} target="_blank" rel="noreferrer">
+                    Open on YouTube
+                  </a>
+                ) : null}
               </div>
             </article>
           ))}
         </div>
       </section>
+
+      {activeCreateVideo ? (
+        <div
+          className={`he-create-modal ${
+            activeCreateVideo.orientation === 'horizontal' ? 'is-horizontal' : 'is-vertical'
+          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${activeCreateVideo.title} preview`}
+          onClick={() => setActiveCreateVideo(null)}
+        >
+          <div className="he-create-modal-panel" onClick={(event) => event.stopPropagation()}>
+            <button
+              className="he-create-modal-close"
+              type="button"
+              onClick={() => setActiveCreateVideo(null)}
+              aria-label="Close preview"
+            >
+              X
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${activeCreateVideo.youtubeId}?autoplay=1`}
+              title={`${activeCreateVideo.title} preview`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+            <a className="he-create-modal-link" href={activeCreateVideo.url} target="_blank" rel="noreferrer">
+              Open on YouTube
+            </a>
+          </div>
+        </div>
+      ) : null}
 
       <section id="is-this-for-you" className="section-block he-section anchor-section">
         <div className="section-heading reveal">

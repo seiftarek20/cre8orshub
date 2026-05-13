@@ -38,6 +38,8 @@ const EXCLUDED_REVIEW_PATTERNS = [
 
 const CAROUSEL_GAP = 16;
 const MIN_CARD_WIDTH = 220;
+const SOCIAL_PLATFORMS = ['whatsapp', 'instagram', 'ask', 'facebook'];
+const IMAGE_REVIEWS = [];
 
 const normalizeHeader = (value) =>
   String(value || '')
@@ -90,6 +92,25 @@ const randomReviewDate = (seedInput) => {
   const minute = Math.floor(random() * 60);
   const second = Math.floor(random() * 60);
   return new Date(year, month, day, hour, minute, second);
+};
+
+const platformLabel = {
+  whatsapp: 'WhatsApp',
+  instagram: 'Instagram DM',
+  ask: 'Ask Reply',
+  facebook: 'Facebook',
+};
+
+const platformMark = {
+  whatsapp: 'WA',
+  instagram: 'IG',
+  ask: 'ASK',
+  facebook: 'FB',
+};
+
+const pickPlatform = (seedInput) => {
+  const index = hashString(seedInput) % SOCIAL_PLATFORMS.length;
+  return SOCIAL_PLATFORMS[index];
 };
 
 const firstValueByColumns = (row, columns) => {
@@ -162,18 +183,23 @@ function Testimonials() {
             if (!reviewText || shouldExcludeReview(reviewText)) return null;
 
             const courseLabel = firstValueByColumns(row, COURSE_COLUMNS) || 'Student Feedback';
+            const platform = pickPlatform(`${index}-${reviewText}`);
             return {
               id: `${index}-${reviewText.slice(0, 16)}`,
+              type: 'message',
+              platform,
               text: reviewText,
-              studentLabel: 'Cre8ors Hub Student',
+              studentName: 'Cre8ors Hub Student',
               courseLabel,
+              label: platformLabel[platform],
               rating: 5,
-              submittedAt: formatTimestamp(randomReviewDate(`${index}-${reviewText}`)),
+              date: formatTimestamp(randomReviewDate(`${index}-${reviewText}`)),
+              variant: index % 5,
             };
           })
           .filter(Boolean);
 
-        setReviews(parsedRows);
+        setReviews([...IMAGE_REVIEWS, ...parsedRows]);
         setStatus('ready');
       } catch {
         setStatus('error');
@@ -279,8 +305,8 @@ function Testimonials() {
     <section id="testimonials" className="section-block testimonials-section anchor-section">
       <div className="section-heading reveal">
         <p className="eyebrow">Testimonials</p>
-        <h2>Student Reviews</h2>
-        <p>Real words from creators who joined the journey.</p>
+        <h2>Real Messages. Real Results.</h2>
+        <p>Feedback from students who joined the creative journey.</p>
       </div>
 
       {status === 'loading' && <div className="testimonials-status reveal show">Loading reviews...</div>}
@@ -321,20 +347,37 @@ function Testimonials() {
                   {reviews.map((review) => (
                     <article
                       key={review.id}
-                      className="testimonial-card"
+                      className={`testimonial-card social-proof-card platform-${review.platform} proof-variant-${review.variant || 0} ${
+                        review.type === 'image' ? 'is-image-review' : 'is-message-review'
+                      }`}
                       style={{
                         width: cardWidth ? `${cardWidth}px` : undefined,
                         minWidth: cardWidth ? `${cardWidth}px` : undefined,
                       }}
                     >
-                      <p className="testimonial-rating" aria-label={`Rating ${review.rating} out of 5`}>
-                        {'★'.repeat(review.rating)}
-                      </p>
-                      <p className="testimonial-text">{review.text}</p>
+                      <div className="social-proof-topbar">
+                        <span className="social-proof-mark">{platformMark[review.platform] || 'CH'}</span>
+                        <div>
+                          <p className="testimonial-student">{review.studentName}</p>
+                          <p className="testimonial-course">{review.label || review.courseLabel}</p>
+                        </div>
+                      </div>
+
+                      {review.type === 'image' && review.image ? (
+                        <figure className="testimonial-screenshot">
+                          <img src={review.image} alt={review.label || 'Student review screenshot'} loading="lazy" />
+                        </figure>
+                      ) : (
+                        <div className="message-bubble-shell">
+                          <p className="testimonial-text" dir="auto">{review.text}</p>
+                        </div>
+                      )}
+
                       <div className="testimonial-meta">
-                        <p className="testimonial-student">{review.studentLabel}</p>
-                        <p className="testimonial-course">{review.courseLabel}</p>
-                        <p className="testimonial-date">{review.submittedAt}</p>
+                        <p className="testimonial-date">{review.date}</p>
+                        <p className="testimonial-rating" aria-label={`Rating ${review.rating} out of 5`}>
+                          {'★'.repeat(review.rating)}
+                        </p>
                       </div>
                     </article>
                   ))}
@@ -421,4 +464,3 @@ function Testimonials() {
 }
 
 export default Testimonials;
-

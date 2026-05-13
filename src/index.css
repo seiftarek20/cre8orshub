@@ -67,3 +67,299 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+.examples-section {
+  margin-top: clamp(2.4rem, 5vw, 4.5rem);
+}
+
+.examples-section > h2 {
+  max-width: 980px;
+  margin-bottom: clamp(1rem, 2vw, 1.35rem);
+}
+
+.examples-section .examples-grid {
+  width: min(100%, 1280px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 300px));
+  justify-content: center;
+  align-items: start;
+  gap: clamp(1rem, 2vw, 1.35rem);
+  margin-top: 1rem;
+}
+
+.examples-section .example-card,
+.examples-section .example-card.is-vertical,
+.examples-section .example-card.is-horizontal {
+  position: relative;
+  grid-column: auto;
+  width: min(100%, 300px);
+  min-height: 0;
+  padding: 0.58rem;
+  border: 1px solid rgba(var(--rgb-tq), 0.22);
+  border-radius: 1rem;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 36%),
+    linear-gradient(155deg, rgba(8, 20, 27, 0.96), rgba(1, 8, 12, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 16px 34px rgba(0, 0, 0, 0.28);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.examples-section .example-card.is-horizontal {
+  width: min(100%, 520px);
+}
+
+.examples-section .example-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 72% 34% at 50% 0%, rgba(var(--rgb-tq), 0.14), transparent 72%),
+    linear-gradient(130deg, rgba(215, 181, 109, 0.13), transparent 34%, rgba(var(--rgb-tq), 0.08));
+  opacity: 0.62;
+  transition: opacity 0.3s ease;
+}
+
+.examples-section .example-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(var(--rgb-tq), 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 20px 42px rgba(0, 0, 0, 0.34),
+    0 0 30px rgba(var(--rgb-tq), 0.14),
+    0 0 24px rgba(215, 181, 109, 0.08);
+}
+
+.examples-section .example-card:hover::before {
+  opacity: 1;
+}
+
+.examples-section .example-media-frame,
+.examples-section .example-card video,
+.examples-section .example-card iframe,
+.examples-section .is-vertical .example-media-frame {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border: 0;
+  border-radius: 0.78rem;
+  background: #020608;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(var(--rgb-tq), 0.16);
+}
+
+.examples-section .is-horizontal .example-media-frame {
+  aspect-ratio: 16 / 9;
+}
+
+.examples-section button.example-media-frame {
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+}
+
+.example-youtube-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: saturate(0.94) contrast(1.08) brightness(0.76);
+  transform: scale(1.08);
+  transition: transform 0.38s ease, filter 0.38s ease;
+}
+
+.example-youtube-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.55)),
+    radial-gradient(circle at 50% 42%, rgba(var(--rgb-tq), 0.2), transparent 42%);
+}
+
+.example-card:hover .example-youtube-preview img {
+  transform: scale(1.12);
+  filter: saturate(1.02) contrast(1.1) brightness(0.86);
+}
+
+.example-play-button {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.38), transparent 32%),
+    rgba(2, 10, 14, 0.68);
+  box-shadow:
+    0 0 0 1px rgba(var(--rgb-tq), 0.18),
+    0 0 32px rgba(var(--rgb-tq), 0.26),
+    0 0 26px rgba(215, 181, 109, 0.1);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.example-play-button span {
+  width: 0;
+  height: 0;
+  margin-left: 0.22rem;
+  border-top: 0.58rem solid transparent;
+  border-bottom: 0.58rem solid transparent;
+  border-left: 0.86rem solid #f2fbfc;
+  filter: drop-shadow(0 0 8px rgba(var(--rgb-tq), 0.44));
+}
+
+.example-card:hover .example-play-button {
+  transform: translate(-50%, -50%) scale(1.04);
+  box-shadow:
+    0 0 0 1px rgba(var(--rgb-tq), 0.28),
+    0 0 38px rgba(var(--rgb-tq), 0.32),
+    0 0 30px rgba(215, 181, 109, 0.14);
+}
+
+.examples-section .example-card p {
+  position: relative;
+  z-index: 1;
+  margin-top: 0.68rem;
+  color: var(--heading);
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.example-youtube-link,
+.youtube-modal-link {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 2.35rem;
+  margin-top: 0.65rem;
+  border: 1px solid rgba(var(--rgb-tq), 0.24);
+  border-radius: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--heading);
+  background: rgba(1, 10, 14, 0.42);
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.example-youtube-link:hover,
+.youtube-modal-link:hover {
+  border-color: rgba(var(--rgb-tq), 0.42);
+  background: rgba(var(--rgb-tq), 0.08);
+  box-shadow: 0 0 18px rgba(var(--rgb-tq), 0.12);
+}
+
+.youtube-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 35%, rgba(var(--rgb-tq), 0.12), transparent 62%),
+    rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(14px);
+}
+
+.youtube-modal-panel {
+  position: relative;
+  width: min(420px, 100%);
+  border: 1px solid rgba(var(--rgb-tq), 0.3);
+  border-radius: 1.1rem;
+  padding: 0.7rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 34%),
+    linear-gradient(155deg, rgba(8, 20, 27, 0.98), rgba(1, 8, 12, 0.99));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 70px rgba(0, 0, 0, 0.58),
+    0 0 38px rgba(var(--rgb-tq), 0.12);
+}
+
+.youtube-modal.is-horizontal-modal .youtube-modal-panel {
+  width: min(920px, 100%);
+}
+
+.youtube-modal-panel iframe {
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  display: block;
+  border: 0;
+  border-radius: 0.85rem;
+  background: #020608;
+}
+
+.youtube-modal.is-horizontal-modal .youtube-modal-panel iframe {
+  aspect-ratio: 16 / 9;
+}
+
+.youtube-modal-close {
+  position: absolute;
+  z-index: 2;
+  top: -0.75rem;
+  right: -0.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--rgb-tq), 0.34);
+  background: rgba(2, 10, 14, 0.96);
+  color: var(--heading);
+  cursor: pointer;
+  font-size: 1.4rem;
+  line-height: 1;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+}
+
+@media (max-width: 700px) {
+  .examples-section .examples-grid {
+    grid-template-columns: minmax(0, min(100%, 300px));
+  }
+
+  .examples-section .example-card,
+  .examples-section .example-card.is-vertical,
+  .examples-section .example-card.is-horizontal {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .examples-section .example-card,
+  .examples-section .example-card::before,
+  .example-youtube-preview img,
+  .example-play-button,
+  .example-youtube-link,
+  .youtube-modal-link {
+    transition: none;
+  }
+
+  .examples-section .example-card:hover {
+    transform: none;
+  }
+
+  .example-card:hover .example-youtube-preview img {
+    transform: scale(1.08);
+  }
+
+  .example-card:hover .example-play-button {
+    transform: translate(-50%, -50%);
+  }
+}

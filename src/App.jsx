@@ -15,11 +15,14 @@ import Dashboard from './pages/Dashboard.jsx';
 import MyCourses from './pages/MyCourses.jsx';
 import Projects from './pages/Projects.jsx';
 import Progress from './pages/Progress.jsx';
+import Tasks from './pages/Tasks.jsx';
+import Rewards from './pages/Rewards.jsx';
+import AdminTasks from './pages/AdminTasks.jsx';
 import './App.css';
 
 function App() {
   const location = useLocation();
-  const appRoutes = ['/dashboard', '/my-courses', '/projects', '/progress'];
+  const appRoutes = ['/dashboard', '/my-courses', '/projects', '/progress', '/tasks', '/rewards', '/admin/tasks'];
   const isAppRoute = appRoutes.includes(location.pathname);
 
   return (
@@ -42,6 +45,9 @@ function App() {
           <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/progress" element={<Progress />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/rewards" element={<Rewards />} />
+          <Route path="/admin/tasks" element={<AdminTasks />} />
         </Routes>
       </main>
     </div>
