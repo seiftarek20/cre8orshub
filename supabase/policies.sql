@@ -50,9 +50,61 @@ security definer
 set search_path = public
 as $$
 begin
-  if old.role is distinct from new.role and not public.is_admin() then
+  if old.role is distinct from new.role
+    and current_user not in ('postgres', 'service_role', 'supabase_admin', 'supabase_auth_admin')
+    and not public.is_admin()
+  then
     raise exception 'Only admins can change profile roles.';
   end if;
+
+  return new;
+end;
+$$;
+
+create or replace function public.prevent_student_submission_review_changes()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if public.is_staff() then
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    if new.student_id <> auth.uid()
+      or new.status <> 'submitted'
+      or new.score is not null
+      or new.feedback is not null
+      or new.reviewed_by is not null
+      or new.reviewed_at is not null
+    then
+      raise exception 'Students cannot create submissions with review-only fields.';
+    end if;
+
+    return new;
+  end if;
+
+  if old.student_id <> auth.uid() then
+    raise exception 'Students can only update their own submissions.';
+  end if;
+
+  if old.status not in ('submitted', 'needs_revision') then
+    raise exception 'This submission can no longer be edited by the student.';
+  end if;
+
+  if new.status not in ('submitted', 'needs_revision')
+    or new.score is distinct from old.score
+    or new.feedback is distinct from old.feedback
+    or new.reviewed_by is distinct from old.reviewed_by
+    or new.reviewed_at is distinct from old.reviewed_at
+  then
+    raise exception 'Students cannot update review-only submission fields.';
+  end if;
+
+  new.student_id = old.student_id;
+  new.task_id = old.task_id;
 
   return new;
 end;
@@ -90,6 +142,11 @@ drop trigger if exists prevent_profile_role_change on public.profiles;
 create trigger prevent_profile_role_change
 before update on public.profiles
 for each row execute function public.prevent_profile_role_change();
+
+drop trigger if exists prevent_student_submission_review_changes on public.task_submissions;
+create trigger prevent_student_submission_review_changes
+before insert or update on public.task_submissions
+for each row execute function public.prevent_student_submission_review_changes();
 
 drop policy if exists "Profiles are readable by owner or staff" on public.profiles;
 create policy "Profiles are readable by owner or staff"
@@ -182,13 +239,30 @@ using (student_id = auth.uid() or public.is_staff());
 drop policy if exists "Students create own task submissions" on public.task_submissions;
 create policy "Students create own task submissions"
 on public.task_submissions for insert
-with check (student_id = auth.uid());
+with check (
+  student_id = auth.uid()
+  and status = 'submitted'
+  and score is null
+  and feedback is null
+  and reviewed_by is null
+  and reviewed_at is null
+  and exists (
+    select 1
+    from public.tasks
+    where tasks.id = task_submissions.task_id
+      and tasks.is_published = true
+      and public.is_enrolled(tasks.course_id)
+  )
+);
 
 drop policy if exists "Students update own submitted task submissions" on public.task_submissions;
 create policy "Students update own submitted task submissions"
 on public.task_submissions for update
 using (student_id = auth.uid() and status in ('submitted', 'needs_revision'))
-with check (student_id = auth.uid());
+with check (
+  student_id = auth.uid()
+  and status in ('submitted', 'needs_revision')
+);
 
 drop policy if exists "Staff review task submissions" on public.task_submissions;
 create policy "Staff review task submissions"
@@ -236,13 +310,21 @@ using (is_public = true or student_id = auth.uid() or public.is_staff());
 drop policy if exists "Students create own projects" on public.projects;
 create policy "Students create own projects"
 on public.projects for insert
-with check (student_id = auth.uid());
+with check (
+  student_id = auth.uid()
+  and is_public = false
+  and status in ('draft', 'submitted')
+);
 
 drop policy if exists "Students update own projects" on public.projects;
 create policy "Students update own projects"
 on public.projects for update
 using (student_id = auth.uid())
-with check (student_id = auth.uid());
+with check (
+  student_id = auth.uid()
+  and is_public = false
+  and status in ('draft', 'submitted')
+);
 
 drop policy if exists "Staff manage projects" on public.projects;
 create policy "Staff manage projects"
