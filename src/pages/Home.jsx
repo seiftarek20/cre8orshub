@@ -7,7 +7,6 @@ import Testimonials from '../components/Testimonials.jsx';
 import HomeEnhancements from '../components/HomeEnhancements.jsx';
 import TrustStats from '../components/TrustStats.jsx';
 import { courses } from '../data/courses.js';
-import { whyItems } from '../data/whyItems.js';
 
 const heroHeadlines = [
   'Create visuals that feel impossible to ignore.',
@@ -88,28 +87,6 @@ function Home() {
       <Testimonials />
 
       <HomeEnhancements />
-
-      <section id="why-cre8ors" className="section-block anchor-section">
-        <div className="section-heading reveal">
-          <p className="eyebrow">Why Cre8ors Hub</p>
-          <h2>A place for creators who want their work to feel different.</h2>
-        </div>
-        <div className="why-grid">
-          {whyItems.map((item) => (
-            <article key={item.title} className="why-card reveal">
-              {item.image ? (
-                <img src={item.image} alt={item.title} className="why-image" />
-              ) : (
-                <div className="why-image why-placeholder" aria-hidden="true" />
-              )}
-              <div>
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <section id="booking" className="section-block cta reveal anchor-section">
         <h2>Ready to start creating differently?</h2>

@@ -7,12 +7,8 @@ const SECTION_LINKS = [
   { hash: 'roadmap', label: 'Roadmap' },
   { hash: 'trust-stats', label: 'Numbers' },
   { hash: 'testimonials', label: 'Reviews' },
-  { hash: 'creative-quiz', label: 'Path Quiz' },
-  { hash: 'learning-modes', label: 'Learning' },
   { hash: 'what-you-create', label: 'Create' },
-  { hash: 'is-this-for-you', label: 'For You' },
   { hash: 'student-work', label: 'Student Work' },
-  { hash: 'why-cre8ors', label: 'Why Cre8ors' },
   { hash: 'booking', label: 'Booking' },
 ];
 
