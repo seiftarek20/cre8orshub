@@ -3753,6 +3753,37 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.analytics-page-shell {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.35rem);
+}
+
+.analytics-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.8rem, 1.5vw, 1rem);
+}
+
+.analytics-stat-card {
+  min-height: 150px;
+}
+
+.analytics-stat-card h2 {
+  font-size: clamp(1.8rem, 3.2vw, 2.65rem);
+  color: var(--lux-gold-soft);
+}
+
+.analytics-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.6vw, 1rem);
+}
+
+.analytics-activity-list {
+  display: grid;
+  gap: 0.62rem;
+}
+
 .points-progress {
   display: grid;
   gap: 0.65rem;
@@ -4106,6 +4137,8 @@ p {
   }
 
   .app-dashboard-grid,
+  .analytics-stat-grid,
+  .analytics-recent-grid,
   .project-card-grid,
   .student-work-grid,
   .app-grid-3 {
@@ -4162,6 +4195,8 @@ p {
   }
 
   .app-dashboard-grid,
+  .analytics-stat-grid,
+  .analytics-recent-grid,
   .project-card-grid,
   .student-work-grid,
   .app-grid-3 {
