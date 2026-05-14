@@ -28,6 +28,100 @@ function readSingleRelation(value) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function shouldAwardRewards(status) {
+  return status === 'approved' || status === 'reviewed';
+}
+
+function getSubmissionRewardPoints(submission) {
+  const task = readSingleRelation(submission.tasks);
+  const taskPoints = Number(task?.points || 0);
+  const scorePoints = Number(submission.score || 0);
+
+  return taskPoints > 0 ? taskPoints : scorePoints;
+}
+
+async function awardEligibleBadges(supabase, studentId) {
+  const { data: pointsRows, error: pointsError } = await supabase
+    .from('reward_points')
+    .select('points')
+    .eq('student_id', studentId);
+
+  if (pointsError) throw pointsError;
+
+  const totalPoints = (pointsRows || []).reduce((total, row) => total + Number(row.points || 0), 0);
+
+  const { data: eligibleBadges, error: badgesError } = await supabase
+    .from('badges')
+    .select('id, points_required')
+    .not('points_required', 'is', null)
+    .lte('points_required', totalPoints);
+
+  if (badgesError) throw badgesError;
+  if (!eligibleBadges?.length) return;
+
+  const { data: existingBadges, error: existingError } = await supabase
+    .from('student_badges')
+    .select('badge_id')
+    .eq('student_id', studentId);
+
+  if (existingError) throw existingError;
+
+  const existingBadgeIds = new Set((existingBadges || []).map((badge) => badge.badge_id));
+  const missingBadges = eligibleBadges
+    .filter((badge) => !existingBadgeIds.has(badge.id))
+    .map((badge) => ({
+      student_id: studentId,
+      badge_id: badge.id,
+    }));
+
+  if (!missingBadges.length) return;
+
+  const { error: insertError } = await supabase
+    .from('student_badges')
+    .insert(missingBadges);
+
+  if (insertError) throw insertError;
+}
+
+async function awardSubmissionRewardsIfNeeded(supabase, submission) {
+  if (!shouldAwardRewards(submission.status)) return false;
+
+  const points = getSubmissionRewardPoints(submission);
+  if (!points) return false;
+
+  const sourceId = submission.task_id;
+  const { data: existingReward, error: existingError } = await supabase
+    .from('reward_points')
+    .select('id')
+    .eq('student_id', submission.student_id)
+    .eq('source_type', 'task')
+    .eq('source_id', sourceId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  const task = readSingleRelation(submission.tasks);
+  let didCreateReward = false;
+
+  if (!existingReward) {
+    const { error: rewardError } = await supabase
+      .from('reward_points')
+      .insert({
+        student_id: submission.student_id,
+        source_type: 'task',
+        source_id: sourceId,
+        points,
+        note: `Task approved: ${task?.title || 'Task submission'}`,
+      });
+
+    if (rewardError) throw rewardError;
+    didCreateReward = true;
+  }
+
+  await awardEligibleBadges(supabase, submission.student_id);
+  return didCreateReward;
+}
+
 export function normalizeSubmission(submission) {
   const task = readSingleRelation(submission.tasks);
   const course = readSingleRelation(task?.courses);
@@ -145,5 +239,10 @@ export async function updateSubmissionReview(submissionId, { status, feedback, s
     .single();
 
   if (error) throw error;
-  return normalizeSubmission(data);
+  const rewardsUpdated = await awardSubmissionRewardsIfNeeded(supabase, data);
+
+  return {
+    ...normalizeSubmission(data),
+    rewardsUpdated,
+  };
 }

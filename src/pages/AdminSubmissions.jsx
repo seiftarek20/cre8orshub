@@ -58,9 +58,13 @@ function AdminSubmissions() {
     setLoadError('');
 
     try {
-      await updateSubmissionReview(submissionId, drafts[submissionId]);
+      const reviewedSubmission = await updateSubmissionReview(submissionId, drafts[submissionId]);
       await loadSubmissions();
-      setSaveMessage('Review saved.');
+      setSaveMessage(
+        reviewedSubmission.rewardsUpdated
+          ? 'Submission reviewed and rewards updated.'
+          : 'Submission reviewed. Rewards were already up to date.',
+      );
     } catch (error) {
       setLoadError(error.message || 'Could not save review.');
     } finally {

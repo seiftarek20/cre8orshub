@@ -36,14 +36,14 @@ function Rewards() {
   useEffect(() => {
     let isMounted = true;
 
-    async function loadRewards() {
+    async function loadRewards({ showLoading = true } = {}) {
       if (!user?.id) {
         setBackendRewards(null);
         setLoadError('');
         return;
       }
 
-      setIsLoading(true);
+      if (showLoading) setIsLoading(true);
       setLoadError('');
 
       try {
@@ -61,8 +61,17 @@ function Rewards() {
 
     loadRewards();
 
+    const refreshOnFocus = () => {
+      loadRewards({ showLoading: false });
+    };
+
+    window.addEventListener('focus', refreshOnFocus);
+    document.addEventListener('visibilitychange', refreshOnFocus);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('focus', refreshOnFocus);
+      document.removeEventListener('visibilitychange', refreshOnFocus);
     };
   }, [user?.id]);
 
