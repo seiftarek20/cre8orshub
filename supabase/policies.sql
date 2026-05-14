@@ -328,6 +328,15 @@ with check (
   and status in ('draft', 'submitted')
 );
 
+drop policy if exists "Students delete own draft projects" on public.projects;
+create policy "Students delete own draft projects"
+on public.projects for delete
+using (
+  student_id = auth.uid()
+  and status = 'draft'
+  and is_public = false
+);
+
 drop policy if exists "Staff manage projects" on public.projects;
 create policy "Staff manage projects"
 on public.projects for all

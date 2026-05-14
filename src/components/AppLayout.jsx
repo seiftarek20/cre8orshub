@@ -10,6 +10,7 @@ const appNavItems = [
   { to: '/progress', label: 'Progress' },
   { to: '/profile', label: 'Profile' },
   { to: '/admin/tasks', label: 'Admin Tasks' },
+  { to: '/admin/projects', label: 'Admin Projects' },
   { to: '/admin/submissions', label: 'Admin Reviews' },
   { to: '/admin/bookings', label: 'Admin Bookings' },
 ];

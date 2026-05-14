@@ -3333,6 +3333,38 @@ p {
   animation: appSoftSweep 6s ease-in-out infinite;
 }
 
+.projects-page-shell {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.35rem);
+}
+
+.project-editor-form,
+.project-review-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.project-card-grid,
+.student-work-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.6vw, 1rem);
+}
+
+.project-manage-card,
+.project-review-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.project-cover {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 0.9rem;
+  object-fit: cover;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.16);
+  background: rgba(0, 0, 0, 0.2);
+}
+
 .app-roadmap-panel {
   display: grid;
   gap: 0.85rem;
@@ -4074,6 +4106,8 @@ p {
   }
 
   .app-dashboard-grid,
+  .project-card-grid,
+  .student-work-grid,
   .app-grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -4128,6 +4162,8 @@ p {
   }
 
   .app-dashboard-grid,
+  .project-card-grid,
+  .student-work-grid,
   .app-grid-3 {
     grid-template-columns: 1fr;
   }
@@ -4139,6 +4175,8 @@ p {
   .reward-badge-grid,
   .rewards-grid,
   .admin-task-form,
+  .project-editor-form,
+  .project-review-form,
   .booking-admin-form,
   .submission-review-form {
     grid-template-columns: 1fr;
