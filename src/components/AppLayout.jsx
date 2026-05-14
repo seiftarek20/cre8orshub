@@ -11,6 +11,7 @@ const appNavItems = [
   { to: '/profile', label: 'Profile' },
   { to: '/admin/tasks', label: 'Admin Tasks' },
   { to: '/admin/submissions', label: 'Admin Reviews' },
+  { to: '/admin/bookings', label: 'Admin Bookings' },
 ];
 
 function AppLayout({ eyebrow, title, description, children, action }) {

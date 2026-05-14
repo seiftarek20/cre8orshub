@@ -3691,6 +3691,36 @@ p {
   font-weight: 700;
 }
 
+.booking-admin-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.booking-admin-details {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.booking-admin-details p {
+  display: grid;
+  gap: 0.24rem;
+  margin: 0;
+}
+
+.booking-admin-details strong {
+  color: var(--lux-gold-soft);
+  font-size: 0.78rem;
+}
+
+.booking-admin-details span {
+  color: rgba(232, 248, 250, 0.76);
+  overflow-wrap: anywhere;
+}
+
+.booking-admin-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .points-progress {
   display: grid;
   gap: 0.65rem;
@@ -4109,6 +4139,7 @@ p {
   .reward-badge-grid,
   .rewards-grid,
   .admin-task-form,
+  .booking-admin-form,
   .submission-review-form {
     grid-template-columns: 1fr;
   }

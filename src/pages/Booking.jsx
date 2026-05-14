@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { courses } from '../data/courses.js';
+import { createBookingRequest } from '../services/bookingService.js';
 
 const whatsappNumber = '201002316651';
 
@@ -10,6 +11,7 @@ function Booking() {
 
   const [formData, setFormData] = useState({
     name: '',
+    email: '',
     phone: '',
     course: preselectedCourse,
     level: '',
@@ -17,6 +19,9 @@ function Booking() {
     preferredContactTime: '',
     message: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === formData.course)?.title || formData.course || '-',
@@ -28,9 +33,7 @@ function Booking() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
+  const buildWhatsappUrl = () => {
     const selectedLearningMode =
       learningModeOptions.find((mode) => mode.value === formData.learningMode)?.labelEn ||
       formData.learningMode;
@@ -38,6 +41,7 @@ function Booking() {
     const message = [
       'New Creative Consultation - Cre8ors Hub',
       `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
       `Phone: ${formData.phone}`,
       `Course: ${selectedCourse}`,
       `Current Level: ${formData.level}`,
@@ -46,8 +50,52 @@ function Booking() {
       `Message: ${formData.message || '-'}`,
     ].join('\n');
 
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSuccessMessage('');
+    setErrorMessage('');
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.course || !formData.learningMode) {
+      setErrorMessage('Please complete the required booking details.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await createBookingRequest({
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        course_slug: formData.course,
+        preferred_mode: formData.learningMode,
+        message: [
+          formData.level ? `Level: ${formData.level}` : '',
+          formData.preferredContactTime ? `Preferred contact time: ${formData.preferredContactTime}` : '',
+          formData.message,
+        ].filter(Boolean).join('\n'),
+      });
+
+      setSuccessMessage('Your booking request was sent. We will contact you soon.');
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        course: preselectedCourse,
+        level: '',
+        learningMode: '',
+        preferredContactTime: '',
+        message: '',
+      });
+    } catch (error) {
+      setErrorMessage('Could not save the booking request. Opening WhatsApp as a fallback.');
+      window.open(buildWhatsappUrl(), '_blank', 'noopener,noreferrer');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const learningModeOptions = [
@@ -88,6 +136,17 @@ function Booking() {
             type="text"
             name="name"
             value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </label>
+
+        <label>
+          Email
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
             onChange={handleChange}
             required
           />
@@ -170,7 +229,11 @@ function Booking() {
           />
         </label>
 
-        <button className="btn btn-primary" type="submit">
+        {successMessage ? <p className="auth-message is-success">{successMessage}</p> : null}
+        {errorMessage ? <p className="auth-message is-error">{errorMessage}</p> : null}
+        {isSubmitting ? <p className="auth-message">Sending your booking request...</p> : null}
+
+        <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
           احجز استشارة
         </button>
       </form>

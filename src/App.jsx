@@ -26,6 +26,7 @@ import Rewards from './pages/Rewards.jsx';
 import AdminTasks from './pages/AdminTasks.jsx';
 import Submissions from './pages/Submissions.jsx';
 import AdminSubmissions from './pages/AdminSubmissions.jsx';
+import AdminBookings from './pages/AdminBookings.jsx';
 import './App.css';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
     '/profile',
     '/admin/tasks',
     '/admin/submissions',
+    '/admin/bookings',
   ];
   const isAppRoute = appRoutes.includes(location.pathname);
 
@@ -78,6 +80,10 @@ function App() {
             <Route
               path="/admin/submissions"
               element={<RoleRoute allowedRoles={['admin', 'instructor']}><AdminSubmissions /></RoleRoute>}
+            />
+            <Route
+              path="/admin/bookings"
+              element={<RoleRoute allowedRoles={['admin', 'instructor']}><AdminBookings /></RoleRoute>}
             />
           </Routes>
         </main>
