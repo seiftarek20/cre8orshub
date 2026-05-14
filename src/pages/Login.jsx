@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -11,6 +11,10 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  useEffect(() => {
+    document.title = 'Login | Cre8ors Hub';
+  }, []);
 
   if (!isLoading && isAuthenticated) {
     return <Navigate to={from} replace />;

@@ -3753,6 +3753,53 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.seo-landing-page {
+  display: grid;
+  gap: clamp(1.1rem, 2.5vw, 1.75rem);
+}
+
+.seo-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.6vw, 1rem);
+}
+
+.seo-info-panel {
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.16);
+  border-radius: 1rem;
+  padding: 1rem;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(var(--lux-gold-rgb), 0.08), transparent 68%),
+    linear-gradient(158deg, rgba(10, 18, 22, 0.92), rgba(3, 10, 14, 0.97));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+.seo-info-panel ul {
+  margin: 0.8rem 0 0;
+  padding-left: 1.1rem;
+  color: rgba(163, 202, 212, 0.82);
+}
+
+.seo-info-panel li + li {
+  margin-top: 0.55rem;
+}
+
+.seo-faq-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.seo-faq-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.85rem, 1.6vw, 1rem);
+}
+
+.seo-faq-list h3 {
+  color: var(--heading);
+  font-size: 1rem;
+}
+
 .analytics-page-shell {
   display: grid;
   gap: clamp(1rem, 2vw, 1.35rem);
@@ -4139,6 +4186,8 @@ p {
   .app-dashboard-grid,
   .analytics-stat-grid,
   .analytics-recent-grid,
+  .seo-info-grid,
+  .seo-faq-list,
   .project-card-grid,
   .student-work-grid,
   .app-grid-3 {
@@ -4197,6 +4246,8 @@ p {
   .app-dashboard-grid,
   .analytics-stat-grid,
   .analytics-recent-grid,
+  .seo-info-grid,
+  .seo-faq-list,
   .project-card-grid,
   .student-work-grid,
   .app-grid-3 {

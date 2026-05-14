@@ -32,6 +32,7 @@ const AdminSubmissions = lazy(() => import('./pages/AdminSubmissions.jsx'));
 const AdminBookings = lazy(() => import('./pages/AdminBookings.jsx'));
 const AdminProjects = lazy(() => import('./pages/AdminProjects.jsx'));
 const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics.jsx'));
+const SEOCourseLanding = lazy(() => import('./pages/SEOCourseLanding.jsx'));
 
 function App() {
   const location = useLocation();
@@ -67,6 +68,10 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:id" element={<CourseDetails />} />
+              <Route path="/motion-graphics-course-egypt" element={<SEOCourseLanding pageKey="motionGraphics" />} />
+              <Route path="/video-editing-course-egypt" element={<SEOCourseLanding pageKey="videoEditing" />} />
+              <Route path="/graphic-design-course-egypt" element={<SEOCourseLanding pageKey="graphicDesign" />} />
+              <Route path="/ai-video-making-course" element={<SEOCourseLanding pageKey="aiVideo" />} />
               <Route path="/roadmap" element={<RoadmapPage />} />
               <Route path="/booking" element={<Booking />} />
               <Route path="/student-work" element={<StudentWork />} />

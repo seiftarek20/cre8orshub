@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import CourseCurriculum from '../components/CourseCurriculum.jsx';
 import { getCourseCurriculumById } from '../data/courseCurriculums.js';
 import { getCourseById } from '../data/courses.js';
+import { JsonLd, buildCourseJsonLd, siteUrl } from '../utils/seo.jsx';
 
 function CourseExampleMedia({ example, onPlay }) {
   const isYoutube = example.type === 'youtube' && example.youtubeId;
@@ -49,6 +50,10 @@ function CourseDetails() {
   const curriculum = getCourseCurriculumById(id);
 
   useEffect(() => {
+    document.title = course ? `${course.title} | Cre8ors Hub` : 'Course Not Found | Cre8ors Hub';
+  }, [course]);
+
+  useEffect(() => {
     if (!activeExample) return undefined;
 
     const closeOnEscape = (event) => {
@@ -74,6 +79,14 @@ function CourseDetails() {
 
   return (
     <section className="section-block page-top">
+      <JsonLd
+        data={buildCourseJsonLd({
+          name: `${course.title} Course`,
+          description: course.description || course.subtitle,
+          url: `${siteUrl}/courses/${course.id}`,
+          image: course.coverImage?.startsWith('http') ? course.coverImage : `${siteUrl}${course.coverImage}`,
+        })}
+      />
       <header className="details-hero reveal">
         <p className="eyebrow">{course.arabicTitle}</p>
         <h1>{course.title}</h1>

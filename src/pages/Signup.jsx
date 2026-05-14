@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -9,6 +9,10 @@ export default function Signup() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Signup | Cre8ors Hub';
+  }, []);
 
   if (!isLoading && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;

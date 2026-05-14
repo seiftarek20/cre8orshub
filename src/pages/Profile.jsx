@@ -10,6 +10,10 @@ export default function Profile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    document.title = 'Profile | Cre8ors Hub';
+  }, []);
+
+  useEffect(() => {
     setForm({
       full_name: profile?.full_name || '',
       phone: profile?.phone || '',
