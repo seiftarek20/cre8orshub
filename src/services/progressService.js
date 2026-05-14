@@ -1,6 +1,27 @@
-// Phase 1 placeholder.
-// Real Supabase course progress and lesson completion reads/writes will be
-// connected after enrollments and lesson_progress tables are created.
-export async function getStudentProgress() {
-  return [];
+import { requireSupabaseClient } from '../lib/supabaseClient.js';
+
+export async function getStudentProgress(userId) {
+  if (!userId) return [];
+
+  const supabase = requireSupabaseClient();
+  const { data, error } = await supabase
+    .from('lesson_progress')
+    .select(`
+      id,
+      status,
+      progress_percent,
+      updated_at,
+      courses (
+        title
+      ),
+      lessons (
+        title,
+        duration_minutes
+      )
+    `)
+    .eq('student_id', userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
 }

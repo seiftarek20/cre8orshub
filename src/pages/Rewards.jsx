@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import AppCard from '../components/AppCard.jsx';
 import AppLayout from '../components/AppLayout.jsx';
 import PointsProgress from '../components/PointsProgress.jsx';
 import RewardBadge from '../components/RewardBadge.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import {
   achievements,
   badges,
@@ -10,8 +12,81 @@ import {
   rewardsActivity,
   unlockableRewards,
 } from '../data/rewards.js';
+import { getStudentRewards } from '../services/rewardService.js';
+
+function getLevelFromPoints(totalPoints) {
+  if (totalPoints >= 3200) return 'Creative Pro';
+  if (totalPoints >= 2400) return 'Portfolio Ready';
+  if (totalPoints >= 1200) return 'Visual Storyteller';
+  if (totalPoints >= 400) return 'Consistent Editor';
+  return 'Beginner Creator';
+}
+
+function getNextLevel(currentLevel) {
+  const currentIndex = creatorLevels.indexOf(currentLevel);
+  return creatorLevels[Math.min(currentIndex + 1, creatorLevels.length - 1)] || creatorLevels[0];
+}
 
 function Rewards() {
+  const { user } = useAuth();
+  const [backendRewards, setBackendRewards] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRewards() {
+      if (!user?.id) {
+        setBackendRewards(null);
+        setLoadError('');
+        return;
+      }
+
+      setIsLoading(true);
+      setLoadError('');
+
+      try {
+        const rewards = await getStudentRewards(user.id);
+        if (isMounted) setBackendRewards(rewards);
+      } catch (error) {
+        if (isMounted) {
+          setBackendRewards(null);
+          setLoadError(error.message || 'Could not load live rewards.');
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadRewards();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const hasBackendData = Boolean(
+    backendRewards && (backendRewards.totalPoints || backendRewards.badges.length || backendRewards.activity.length),
+  );
+  const liveLevel = hasBackendData ? getLevelFromPoints(backendRewards.totalPoints) : pointsSummary.currentLevel;
+  const liveSummary = useMemo(() => {
+    if (!hasBackendData) return pointsSummary;
+
+    return {
+      balance: backendRewards.totalPoints,
+      currentLevel: liveLevel,
+      nextLevel: getNextLevel(liveLevel),
+      levelProgress: Math.min(Math.round((backendRewards.totalPoints % 1200) / 12), 100),
+      streak: pointsSummary.streak,
+    };
+  }, [backendRewards, hasBackendData, liveLevel]);
+  const visibleBadges = hasBackendData && backendRewards.badges.length ? backendRewards.badges : badges;
+  const visibleAchievements = hasBackendData && backendRewards.activity.length ? backendRewards.activity : achievements;
+  const visibleActivity = hasBackendData && backendRewards.activity.length
+    ? backendRewards.activity.map((item) => `${item.title} (${item.points})`)
+    : rewardsActivity;
+
   return (
     <AppLayout
       eyebrow="Rewards"
@@ -22,21 +97,24 @@ function Rewards() {
         <section className="rewards-balance-panel reveal">
           <div>
             <p className="app-card-eyebrow">Points Balance</p>
-            <h2>{pointsSummary.balance.toLocaleString()} pts</h2>
+            <h2>{liveSummary.balance.toLocaleString()} pts</h2>
             <p>
-              Current level: <strong>{pointsSummary.currentLevel}</strong>
+              Current level: <strong>{liveSummary.currentLevel}</strong>
             </p>
           </div>
           <PointsProgress
-            label={`Progress to ${pointsSummary.nextLevel}`}
-            value={pointsSummary.levelProgress}
-            detail={`${100 - pointsSummary.levelProgress}% left until the next level unlocks.`}
+            label={`Progress to ${liveSummary.nextLevel}`}
+            value={liveSummary.levelProgress}
+            detail={`${100 - liveSummary.levelProgress}% left until the next level unlocks.`}
           />
         </section>
 
+        {isLoading ? <p className="auth-message">Loading your latest rewards...</p> : null}
+        {loadError ? <p className="auth-message is-error">Live rewards are unavailable, so starter rewards are shown.</p> : null}
+
         <section className="rewards-level-strip reveal" aria-label="Creator levels">
           {creatorLevels.map((level) => (
-            <span key={level} className={level === pointsSummary.currentLevel ? 'is-active' : ''}>
+            <span key={level} className={level === liveSummary.currentLevel ? 'is-active' : ''}>
               {level}
             </span>
           ))}
@@ -48,7 +126,7 @@ function Rewards() {
             <h2>Creator milestones</h2>
           </div>
           <div className="reward-badge-grid">
-            {badges.map((badge) => (
+            {visibleBadges.map((badge) => (
               <RewardBadge key={badge.title} badge={badge} />
             ))}
           </div>
@@ -57,7 +135,7 @@ function Rewards() {
         <div className="rewards-grid">
           <AppCard eyebrow="Achievements" title="Recent wins">
             <div className="rewards-list">
-              {achievements.map((achievement) => (
+              {visibleAchievements.map((achievement) => (
                 <div key={achievement.title} className="rewards-list-row">
                   <div>
                     <strong>{achievement.title}</strong>
@@ -69,9 +147,9 @@ function Rewards() {
             </div>
           </AppCard>
 
-          <AppCard eyebrow="Streak" title={`${pointsSummary.streak} days`}>
+          <AppCard eyebrow="Streak" title={`${liveSummary.streak} days`}>
             <p>Keep submitting small polished work each week to protect the streak and earn extra points.</p>
-            <div className="streak-dots" aria-label={`${pointsSummary.streak} day streak`}>
+            <div className="streak-dots" aria-label={`${liveSummary.streak} day streak`}>
               {Array.from({ length: 9 }, (_, index) => (
                 <span key={index} />
               ))}
@@ -94,7 +172,7 @@ function Rewards() {
 
           <AppCard eyebrow="Activity" title="Recent rewards activity">
             <div className="app-activity-list">
-              {rewardsActivity.map((item) => (
+              {visibleActivity.map((item) => (
                 <p key={item}>{item}</p>
               ))}
             </div>

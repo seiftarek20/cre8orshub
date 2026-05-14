@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom';
 import AppCard from '../components/AppCard.jsx';
 import AppLayout from '../components/AppLayout.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { appActivity, appCourses, appTasks, studentSnapshot } from '../data/appData.js';
 
 function Dashboard() {
+  const { profile, user } = useAuth();
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || studentSnapshot.name;
+
   return (
     <AppLayout
       eyebrow="Student Workspace"
-      title={`Welcome back, ${studentSnapshot.name}`}
+      title={`Welcome back, ${displayName}`}
       description="A calm command center for your courses, projects, and creative progress."
       action={
         <Link className="btn btn-primary" to="/my-courses">

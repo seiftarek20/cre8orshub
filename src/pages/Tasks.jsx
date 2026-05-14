@@ -1,9 +1,63 @@
+import { useEffect, useMemo, useState } from 'react';
 import AppCard from '../components/AppCard.jsx';
 import AppLayout from '../components/AppLayout.jsx';
 import TaskCard from '../components/TaskCard.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { currentTasks, taskStats, weeklyChallenges } from '../data/tasks.js';
+import { getStudentTasks } from '../services/taskService.js';
 
 function Tasks() {
+  const { user } = useAuth();
+  const [backendTasks, setBackendTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTasks() {
+      if (!user?.id) {
+        setBackendTasks([]);
+        setLoadError('');
+        return;
+      }
+
+      setIsLoading(true);
+      setLoadError('');
+
+      try {
+        const tasks = await getStudentTasks(user.id);
+        if (isMounted) setBackendTasks(tasks);
+      } catch (error) {
+        if (isMounted) {
+          setBackendTasks([]);
+          setLoadError(error.message || 'Could not load live tasks.');
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadTasks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]);
+
+  const tasks = backendTasks.length ? backendTasks : currentTasks;
+  const isUsingFallback = !backendTasks.length;
+  const liveStats = useMemo(() => {
+    if (!backendTasks.length) return taskStats;
+
+    return {
+      openTasks: backendTasks.filter((task) => task.status === 'Open').length,
+      submittedTasks: backendTasks.filter((task) => task.status === 'Submitted').length,
+      reviewedTasks: backendTasks.filter((task) => task.status === 'Reviewed').length,
+      weeklyPoints: backendTasks.reduce((total, task) => total + (task.points || 0), 0),
+    };
+  }, [backendTasks]);
+
   return (
     <AppLayout
       eyebrow="Tasks Studio"
@@ -20,36 +74,41 @@ function Tasks() {
             </p>
           </div>
           <div className="tasks-stats-row">
-            <span>{taskStats.openTasks} Open</span>
-            <span>{taskStats.submittedTasks} Submitted</span>
-            <span>{taskStats.reviewedTasks} Reviewed</span>
-            <span>{taskStats.weeklyPoints} pts</span>
+            <span>{liveStats.openTasks} Open</span>
+            <span>{liveStats.submittedTasks} Submitted</span>
+            <span>{liveStats.reviewedTasks} Reviewed</span>
+            <span>{liveStats.weeklyPoints} pts</span>
           </div>
         </section>
 
+        {isLoading ? <p className="auth-message">Loading your latest tasks...</p> : null}
+        {loadError ? <p className="auth-message is-error">Live tasks are unavailable, so the studio is showing starter tasks.</p> : null}
+
         <section className="tasks-section">
           <div className="app-section-heading reveal">
-            <p className="app-card-eyebrow">Current Tasks</p>
+            <p className="app-card-eyebrow">{isUsingFallback ? 'Current Tasks' : 'Live Tasks'}</p>
             <h2>Active assignments</h2>
           </div>
           <div className="task-card-grid">
-            {currentTasks.map((task) => (
+            {tasks.map((task) => (
               <TaskCard key={task.id} task={task} />
             ))}
           </div>
         </section>
 
-        <section className="tasks-section">
-          <div className="app-section-heading reveal">
-            <p className="app-card-eyebrow">Weekly Challenges</p>
-            <h2>Limited creative prompts</h2>
-          </div>
-          <div className="task-card-grid is-compact">
-            {weeklyChallenges.map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-          </div>
-        </section>
+        {isUsingFallback ? (
+          <section className="tasks-section">
+            <div className="app-section-heading reveal">
+              <p className="app-card-eyebrow">Weekly Challenges</p>
+              <h2>Limited creative prompts</h2>
+            </div>
+            <div className="task-card-grid is-compact">
+              {weeklyChallenges.map((task) => (
+                <TaskCard key={task.id} task={task} />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <AppCard eyebrow="Submission note" title="Project upload is a placeholder">
           <p>

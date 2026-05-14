@@ -1,6 +1,8 @@
 function TaskCard({ task }) {
+  const statusClass = task.status.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
   return (
-    <article className={`task-card reveal task-status-${task.status.toLowerCase()}`}>
+    <article className={`task-card reveal task-status-${statusClass}`}>
       <div className="task-card-topline">
         <span>{task.category}</span>
         <strong>{task.status}</strong>
@@ -17,7 +19,7 @@ function TaskCard({ task }) {
       <div className="task-requirements">
         <p>Requirements</p>
         <ul>
-          {task.requirements.map((requirement) => (
+          {(task.requirements || []).map((requirement) => (
             <li key={requirement}>{requirement}</li>
           ))}
         </ul>
