@@ -68,7 +68,9 @@ security definer
 set search_path = public
 as $$
 begin
-  if public.is_staff() then
+  if current_user in ('postgres', 'service_role', 'supabase_admin', 'supabase_auth_admin')
+    or public.is_staff()
+  then
     return new;
   end if;
 
