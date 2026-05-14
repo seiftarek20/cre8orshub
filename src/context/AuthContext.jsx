@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
     const nextProfile = await getCurrentUserProfile(nextUser.id);
     setProfile(nextProfile);
     return nextProfile;
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -60,6 +60,8 @@ export function AuthProvider({ children }) {
     }
 
     const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!isMounted) return;
+
       setSession(nextSession);
       setAuthError(null);
 
@@ -67,8 +69,10 @@ export function AuthProvider({ children }) {
         try {
           await loadProfile(nextSession.user);
         } catch (error) {
-          setAuthError(error.message);
-          setProfile(null);
+          if (isMounted) {
+            setAuthError(error.message);
+            setProfile(null);
+          }
         }
       } else {
         setProfile(null);
@@ -82,6 +86,7 @@ export function AuthProvider({ children }) {
   }, [loadProfile]);
 
   const login = useCallback(async ({ email, password }) => {
+    setAuthError(null);
     const data = await signInWithEmail({ email, password });
     setSession(data.session);
     if (data.user) await loadProfile(data.user);
@@ -89,6 +94,7 @@ export function AuthProvider({ children }) {
   }, [loadProfile]);
 
   const signup = useCallback(async ({ email, password, fullName }) => {
+    setAuthError(null);
     const data = await signUpWithEmail({ email, password, fullName });
     setSession(data.session);
     if (data.user) await loadProfile(data.user);
@@ -96,6 +102,7 @@ export function AuthProvider({ children }) {
   }, [loadProfile]);
 
   const logout = useCallback(async () => {
+    setAuthError(null);
     await signOut();
     setSession(null);
     setProfile(null);
@@ -103,6 +110,7 @@ export function AuthProvider({ children }) {
 
   const updateProfile = useCallback(async (updates) => {
     if (!user) throw new Error('You must be logged in to update your profile.');
+    setAuthError(null);
     const nextProfile = await updateCurrentUserProfile(user.id, updates);
     setProfile(nextProfile);
     return nextProfile;

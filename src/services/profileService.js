@@ -17,9 +17,9 @@ export async function getCurrentUserProfile(userId) {
 export async function updateCurrentUserProfile(userId, updates) {
   const supabase = requireSupabaseClient();
   const payload = {
-    full_name: updates.full_name || null,
-    phone: updates.phone || null,
-    bio: updates.bio || null,
+    full_name: updates.full_name?.trim() || null,
+    phone: updates.phone?.trim() || null,
+    bio: updates.bio?.trim() || null,
   };
 
   const { data, error } = await supabase

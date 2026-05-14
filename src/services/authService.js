@@ -11,11 +11,11 @@ export async function getCurrentSession() {
 export async function signUpWithEmail({ email, password, fullName }) {
   const supabase = requireSupabaseClient();
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: email.trim(),
     password,
     options: {
       data: {
-        full_name: fullName,
+        full_name: fullName.trim(),
       },
     },
   });
@@ -27,7 +27,7 @@ export async function signUpWithEmail({ email, password, fullName }) {
 export async function signInWithEmail({ email, password }) {
   const supabase = requireSupabaseClient();
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: email.trim(),
     password,
   });
 
