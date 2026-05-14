@@ -3869,6 +3869,11 @@ p {
   align-items: start;
 }
 
+.admin-task-manager {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.35rem);
+}
+
 .admin-task-form,
 .admin-preview-panel {
   border: 1px solid rgba(var(--lux-gold-rgb), 0.16);
@@ -3915,6 +3920,57 @@ p {
 
 .admin-field-wide {
   grid-column: 1 / -1;
+}
+
+.admin-publish-toggle {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.admin-publish-toggle input {
+  width: auto;
+  accent-color: var(--lux-gold);
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.admin-task-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.admin-task-row {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-task-row h2 {
+  font-size: clamp(1.08rem, 1.8vw, 1.35rem);
+}
+
+.admin-task-row p:not(.app-card-eyebrow) {
+  color: rgba(163, 202, 212, 0.78);
+  margin-bottom: 0.7rem;
+}
+
+.admin-task-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.admin-task-row-actions .btn {
+  min-width: 7.2rem;
 }
 
 .admin-preview-panel {
@@ -4009,6 +4065,14 @@ p {
     position: static;
   }
 
+  .admin-task-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-task-row-actions {
+    justify-content: flex-start;
+  }
+
   .app-card,
   .app-card-feature {
     grid-column: auto;
@@ -4051,6 +4115,11 @@ p {
 
   .task-card {
     min-height: auto;
+  }
+
+  .admin-form-actions .btn,
+  .admin-task-row-actions .btn {
+    width: 100%;
   }
 
   .tasks-hero-panel h2,
