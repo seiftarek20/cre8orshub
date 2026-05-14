@@ -1,7 +1,12 @@
+import { useEffect } from 'react';
 import CourseCard from '../components/CourseCard.jsx';
 import { courses } from '../data/courses.js';
 
 function Courses() {
+  useEffect(() => {
+    document.title = 'Courses | Cre8ors Hub';
+  }, []);
+
   return (
     <section className="section-block page-top">
       <div className="section-heading reveal">

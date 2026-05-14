@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { courses } from '../data/courses.js';
 import { createBookingRequest } from '../services/bookingService.js';
@@ -22,6 +22,10 @@ function Booking() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    document.title = 'Booking | Cre8ors Hub';
+  }, []);
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === formData.course)?.title || formData.course || '-',

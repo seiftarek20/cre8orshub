@@ -20,6 +20,10 @@ function Home() {
   const location = useLocation();
 
   useEffect(() => {
+    document.title = 'Cre8ors Hub | Home';
+  }, []);
+
+  useEffect(() => {
     const intervalId = setInterval(() => {
       setHeadlineIndex((prev) => (prev + 1) % heroHeadlines.length);
     }, 10000);

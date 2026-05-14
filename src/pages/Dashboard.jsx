@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AppCard from '../components/AppCard.jsx';
 import AppLayout from '../components/AppLayout.jsx';
@@ -7,6 +8,10 @@ import { appActivity, appCourses, appTasks, studentSnapshot } from '../data/appD
 function Dashboard() {
   const { profile, user } = useAuth();
   const displayName = profile?.full_name || user?.email?.split('@')[0] || studentSnapshot.name;
+
+  useEffect(() => {
+    document.title = 'Dashboard | Cre8ors Hub';
+  }, []);
 
   return (
     <AppLayout
