@@ -7,6 +7,7 @@ const appNavItems = [
   { to: '/rewards', label: 'Rewards' },
   { to: '/projects', label: 'Projects' },
   { to: '/progress', label: 'Progress' },
+  { to: '/profile', label: 'Profile' },
   { to: '/admin/tasks', label: 'Admin Tasks' },
 ];
 
