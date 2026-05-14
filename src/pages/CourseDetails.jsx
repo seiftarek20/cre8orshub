@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import CourseCurriculum from '../components/CourseCurriculum.jsx';
+import PaymentInstructions from '../components/PaymentInstructions.jsx';
 import { getCourseCurriculumById } from '../data/courseCurriculums.js';
 import { getCourseById } from '../data/courses.js';
 import { JsonLd, buildCourseJsonLd, siteUrl } from '../utils/seo.jsx';
@@ -46,6 +47,7 @@ function CourseExampleMedia({ example, onPlay }) {
 function CourseDetails() {
   const { id } = useParams();
   const [activeExample, setActiveExample] = useState(null);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const course = getCourseById(id);
   const curriculum = getCourseCurriculumById(id);
 
@@ -54,17 +56,18 @@ function CourseDetails() {
   }, [course]);
 
   useEffect(() => {
-    if (!activeExample) return undefined;
+    if (!activeExample && !isPaymentOpen) return undefined;
 
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') {
         setActiveExample(null);
+        setIsPaymentOpen(false);
       }
     };
 
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [activeExample]);
+  }, [activeExample, isPaymentOpen]);
 
   if (!course) {
     return (
@@ -106,12 +109,13 @@ function CourseDetails() {
         <aside className="details-side">
           <article className="details-card curriculum-sticky-cta reveal">
             <p className="curriculum-sticky-cta-label">Ready to start?</p>
-            <Link
+            <button
               className="btn btn-primary curriculum-sticky-cta-btn"
-              to={`/booking?course=${course.id}`}
+              type="button"
+              onClick={() => setIsPaymentOpen(true)}
             >
-              Book This Course
-            </Link>
+              Pay / Enroll Now
+            </button>
           </article>
 
           <article className="details-card reveal">
@@ -139,9 +143,9 @@ function CourseDetails() {
           <article className="details-card reveal">
             <h2>Actions</h2>
             <div className="actions-column">
-              <Link className="btn btn-primary" to={`/booking?course=${course.id}`}>
-                Book a Call
-              </Link>
+              <button className="btn btn-primary" type="button" onClick={() => setIsPaymentOpen(true)}>
+                Pay / Enroll Now
+              </button>
 
               <a
                 className="btn btn-outline"
@@ -230,6 +234,26 @@ function CourseDetails() {
               </a>
             ) : null}
           </div>
+        </div>
+      ) : null}
+
+      {isPaymentOpen ? (
+        <div className="app-modal-backdrop" role="presentation" onMouseDown={() => setIsPaymentOpen(false)}>
+          <section
+            className="app-modal-panel reveal show payment-modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-modal-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <button className="app-modal-close" type="button" onClick={() => setIsPaymentOpen(false)}>
+              Close
+            </button>
+            <p className="app-card-eyebrow">Course Payment</p>
+            <h2 id="payment-modal-title">{course.title}</h2>
+            <p className="app-muted">Complete payment, then send proof on WhatsApp so enrollment can be confirmed.</p>
+            <PaymentInstructions courseTitle={course.title} />
+          </section>
         </div>
       ) : null}
     </section>
