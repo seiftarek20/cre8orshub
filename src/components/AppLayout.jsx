@@ -4,11 +4,13 @@ const appNavItems = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/my-courses', label: 'My Courses' },
   { to: '/tasks', label: 'Tasks' },
+  { to: '/submissions', label: 'Submissions' },
   { to: '/rewards', label: 'Rewards' },
   { to: '/projects', label: 'Projects' },
   { to: '/progress', label: 'Progress' },
   { to: '/profile', label: 'Profile' },
   { to: '/admin/tasks', label: 'Admin Tasks' },
+  { to: '/admin/submissions', label: 'Admin Reviews' },
 ];
 
 function AppLayout({ eyebrow, title, description, children, action }) {

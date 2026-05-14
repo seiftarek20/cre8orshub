@@ -3520,6 +3520,14 @@ p {
   color: #c8f0cf;
 }
 
+.task-status-needs-revision .task-card-topline strong {
+  color: #ffd48a;
+}
+
+.task-status-approved .task-card-topline strong {
+  color: #c8f0cf;
+}
+
 .task-card-header {
   display: grid;
   gap: 0.55rem;
@@ -3583,6 +3591,104 @@ p {
   border-radius: 0.76rem;
   background: rgba(var(--lux-gold-rgb), 0.055);
   border-color: rgba(var(--lux-gold-rgb), 0.22);
+}
+
+.task-submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+.app-modal-panel {
+  position: relative;
+  width: min(100%, 620px);
+  max-height: min(92svh, 760px);
+  overflow: auto;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.24);
+  border-radius: 1.1rem;
+  padding: clamp(1rem, 3vw, 1.35rem);
+  display: grid;
+  gap: 0.85rem;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(var(--lux-gold-rgb), 0.14), transparent 68%),
+    linear-gradient(158deg, rgba(10, 18, 22, 0.98), rgba(3, 10, 14, 0.99));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 24px 70px rgba(0, 0, 0, 0.5),
+    0 0 36px rgba(var(--lux-gold-rgb), 0.08);
+}
+
+.app-modal-panel h2 {
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+}
+
+.app-modal-close {
+  justify-self: end;
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.18);
+  border-radius: 999px;
+  padding: 0.45rem 0.72rem;
+  color: var(--heading);
+  background: rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+
+.submission-form {
+  grid-template-columns: 1fr;
+}
+
+.submissions-page-shell {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.35rem);
+}
+
+.submission-card-grid,
+.submission-review-list {
+  display: grid;
+  gap: clamp(0.85rem, 1.8vw, 1rem);
+}
+
+.submission-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.submission-review-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.submission-review-form {
+  grid-template-columns: minmax(160px, 0.35fr) minmax(120px, 0.25fr) minmax(0, 1fr);
+}
+
+.submission-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.submission-meta-row span {
+  border: 1px solid rgba(var(--lux-gold-rgb), 0.14);
+  border-radius: 999px;
+  padding: 0.42rem 0.62rem;
+  color: rgba(232, 248, 250, 0.72);
+  font-size: 0.74rem;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.submission-link {
+  width: fit-content;
+  color: var(--lux-gold-soft);
+  font-weight: 700;
 }
 
 .points-progress {
@@ -3894,6 +4000,7 @@ p {
 
   .task-card-grid,
   .task-card-grid.is-compact,
+  .submission-card-grid,
   .reward-badge-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3934,9 +4041,11 @@ p {
   .tasks-stats-row,
   .task-card-grid,
   .task-card-grid.is-compact,
+  .submission-card-grid,
   .reward-badge-grid,
   .rewards-grid,
-  .admin-task-form {
+  .admin-task-form,
+  .submission-review-form {
     grid-template-columns: 1fr;
   }
 

@@ -1,5 +1,7 @@
-function TaskCard({ task }) {
+function TaskCard({ task, onSubmitTask, canSubmit = true }) {
   const statusClass = task.status.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const isFinal = ['approved', 'reviewed'].includes(task.rawStatus);
+  const buttonLabel = task.submission ? 'View Submission' : 'Submit Task';
 
   return (
     <article className={`task-card reveal task-status-${statusClass}`}>
@@ -24,8 +26,13 @@ function TaskCard({ task }) {
           ))}
         </ul>
       </div>
-      <button className="btn btn-outline task-submit-btn" type="button">
-        Submit Project
+      <button
+        className="btn btn-outline task-submit-btn"
+        type="button"
+        onClick={() => onSubmitTask?.(task)}
+        disabled={!canSubmit || isFinal}
+      >
+        {isFinal ? task.status : buttonLabel}
       </button>
     </article>
   );

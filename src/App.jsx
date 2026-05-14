@@ -24,11 +24,24 @@ import Progress from './pages/Progress.jsx';
 import Tasks from './pages/Tasks.jsx';
 import Rewards from './pages/Rewards.jsx';
 import AdminTasks from './pages/AdminTasks.jsx';
+import Submissions from './pages/Submissions.jsx';
+import AdminSubmissions from './pages/AdminSubmissions.jsx';
 import './App.css';
 
 function App() {
   const location = useLocation();
-  const appRoutes = ['/dashboard', '/my-courses', '/projects', '/progress', '/tasks', '/rewards', '/profile', '/admin/tasks'];
+  const appRoutes = [
+    '/dashboard',
+    '/my-courses',
+    '/projects',
+    '/progress',
+    '/tasks',
+    '/submissions',
+    '/rewards',
+    '/profile',
+    '/admin/tasks',
+    '/admin/submissions',
+  ];
   const isAppRoute = appRoutes.includes(location.pathname);
 
   return (
@@ -55,11 +68,16 @@ function App() {
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+            <Route path="/submissions" element={<ProtectedRoute><Submissions /></ProtectedRoute>} />
             <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route
               path="/admin/tasks"
               element={<RoleRoute allowedRoles={['admin', 'instructor']}><AdminTasks /></RoleRoute>}
+            />
+            <Route
+              path="/admin/submissions"
+              element={<RoleRoute allowedRoles={['admin', 'instructor']}><AdminSubmissions /></RoleRoute>}
             />
           </Routes>
         </main>
