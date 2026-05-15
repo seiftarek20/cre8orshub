@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { checkRateLimit } from '../utils/rateLimit.js';
 
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { isAuthenticated, isLoading, login, authError } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     document.title = 'Login | Cre8ors Hub';
   }, []);
 
   if (!isLoading && isAuthenticated) {
-    return <Navigate to={from} replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const updateField = (event) => {
@@ -39,7 +36,7 @@ export default function Login() {
 
     try {
       await login(form);
-      navigate(from, { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (submissionError) {
       setError(submissionError.message || 'Could not log in. Please try again.');
     } finally {
@@ -83,7 +80,7 @@ export default function Login() {
             {authError ? <p className="auth-message is-error">{authError}</p> : null}
             {error ? <p className="auth-message is-error">{error}</p> : null}
 
-            <button className="btn btn-primary" type="submit" disabled={isSubmitting || isLoading}>
+            <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Logging in...' : 'Log In'}
             </button>
           </form>

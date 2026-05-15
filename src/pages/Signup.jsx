@@ -100,7 +100,7 @@ export default function Signup() {
             {error ? <p className="auth-message is-error">{error}</p> : null}
             {message ? <p className="auth-message is-success">{message}</p> : null}
 
-            <button className="btn btn-primary" type="submit" disabled={isSubmitting || isLoading}>
+            <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Creating account...' : 'Sign Up'}
             </button>
           </form>
