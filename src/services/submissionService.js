@@ -1,4 +1,5 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { buildPaginatedResult, getPaginationRange } from '../utils/pagination.js';
 
 const submissionSelect = `
   id,
@@ -211,15 +212,17 @@ export async function updateMySubmissionIfAllowed(submissionId, updates) {
   return normalizeSubmission(data);
 }
 
-export async function getAllTaskSubmissionsForReview() {
+export async function getAllTaskSubmissionsForReview({ page = 1, pageSize = 12 } = {}) {
+  const range = getPaginationRange(page, pageSize);
   const supabase = requireSupabaseClient();
-  const { data, error } = await supabase
+  const { data, count, error } = await supabase
     .from('task_submissions')
-    .select(submissionSelect)
-    .order('submitted_at', { ascending: false });
+    .select(submissionSelect, { count: 'exact' })
+    .order('submitted_at', { ascending: false })
+    .range(range.from, range.to);
 
   if (error) throw error;
-  return (data || []).map(normalizeSubmission);
+  return buildPaginatedResult(data, count, range.page, range.pageSize, normalizeSubmission);
 }
 
 export async function updateSubmissionReview(submissionId, { status, feedback, score }) {

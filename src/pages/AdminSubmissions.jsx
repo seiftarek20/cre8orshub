@@ -7,39 +7,73 @@ import {
 } from '../services/submissionService.js';
 
 const reviewStatuses = ['submitted', 'needs_revision', 'reviewed', 'approved'];
+const PAGE_SIZE = 12;
 
 function AdminSubmissions() {
   const [submissions, setSubmissions] = useState([]);
   const [drafts, setDrafts] = useState({});
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeSaveId, setActiveSaveId] = useState('');
   const [loadError, setLoadError] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
 
-  const loadSubmissions = async () => {
-    setIsLoading(true);
+  const mergeDrafts = (nextSubmissions, shouldReplace = false) => {
+    const nextDrafts = Object.fromEntries(nextSubmissions.map((submission) => [
+      submission.id,
+      {
+        status: submission.status,
+        feedback: submission.feedback || '',
+        score: submission.score ?? '',
+      },
+    ]));
+
+    setDrafts((current) => (shouldReplace ? nextDrafts : { ...current, ...nextDrafts }));
+  };
+
+  const loadSubmissions = async (nextPage = 1, { append = false } = {}) => {
+    append ? setIsLoadingMore(true) : setIsLoading(true);
     setLoadError('');
 
     try {
-      const nextSubmissions = await getAllTaskSubmissionsForReview();
-      setSubmissions(nextSubmissions);
-      setDrafts(Object.fromEntries(nextSubmissions.map((submission) => [
-        submission.id,
-        {
-          status: submission.status,
-          feedback: submission.feedback || '',
-          score: submission.score ?? '',
-        },
-      ])));
+      const result = await getAllTaskSubmissionsForReview({ page: nextPage, pageSize: PAGE_SIZE });
+      setSubmissions((current) => (append ? [...current, ...result.items] : result.items));
+      mergeDrafts(result.items, !append);
+      setPage(result.page);
+      setHasMore(result.hasMore);
     } catch (error) {
       setLoadError(error.message || 'Could not load submissions for review.');
     } finally {
-      setIsLoading(false);
+      append ? setIsLoadingMore(false) : setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadSubmissions();
+    let isMounted = true;
+
+    async function loadInitialSubmissions() {
+      try {
+        const result = await getAllTaskSubmissionsForReview({ page: 1, pageSize: PAGE_SIZE });
+        if (!isMounted) return;
+
+        setSubmissions(result.items);
+        mergeDrafts(result.items, true);
+        setPage(result.page);
+        setHasMore(result.hasMore);
+      } catch (error) {
+        if (isMounted) setLoadError(error.message || 'Could not load submissions for review.');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadInitialSubmissions();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const updateDraft = (submissionId, field, value) => {
@@ -59,7 +93,7 @@ function AdminSubmissions() {
 
     try {
       const reviewedSubmission = await updateSubmissionReview(submissionId, drafts[submissionId]);
-      await loadSubmissions();
+      await loadSubmissions(1);
       setSaveMessage(
         reviewedSubmission.rewardsUpdated
           ? 'Submission reviewed and rewards updated.'
@@ -155,6 +189,16 @@ function AdminSubmissions() {
             );
           })}
         </div>
+        {hasMore ? (
+          <button
+            className="btn btn-outline"
+            type="button"
+            onClick={() => loadSubmissions(page + 1, { append: true })}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? 'Loading...' : 'Load more submissions'}
+          </button>
+        ) : null}
       </div>
     </AppLayout>
   );

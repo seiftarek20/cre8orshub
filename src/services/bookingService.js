@@ -1,4 +1,5 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { buildPaginatedResult, getPaginationRange } from '../utils/pagination.js';
 
 const bookingSelect = `
   id,
@@ -64,15 +65,17 @@ export async function createBookingRequest(data) {
   return payload;
 }
 
-export async function getAllBookingsForStaff() {
+export async function getAllBookingsForStaff({ page = 1, pageSize = 12 } = {}) {
+  const range = getPaginationRange(page, pageSize);
   const supabase = requireSupabaseClient();
-  const { data, error } = await supabase
+  const { data, count, error } = await supabase
     .from('booking_requests')
-    .select(bookingSelect)
-    .order('created_at', { ascending: false });
+    .select(bookingSelect, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(range.from, range.to);
 
   if (error) throw error;
-  return (data || []).map(normalizeBooking);
+  return buildPaginatedResult(data, count, range.page, range.pageSize, normalizeBooking);
 }
 
 export async function updateBookingStatus(id, status) {

@@ -1,4 +1,5 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { buildPaginatedResult, getPaginationRange } from '../utils/pagination.js';
 
 const projectSelect = `
   id,
@@ -126,14 +127,16 @@ export async function deleteMyProject(projectId) {
   if (error) throw error;
 }
 
-export async function getAllProjectsForStaff() {
-  const { data, error } = await requireSupabaseClient()
+export async function getAllProjectsForStaff({ page = 1, pageSize = 12 } = {}) {
+  const range = getPaginationRange(page, pageSize);
+  const { data, count, error } = await requireSupabaseClient()
     .from('projects')
-    .select(projectSelect)
-    .order('updated_at', { ascending: false });
+    .select(projectSelect, { count: 'exact' })
+    .order('updated_at', { ascending: false })
+    .range(range.from, range.to);
 
   if (error) throw error;
-  return (data || []).map(normalizeProject);
+  return buildPaginatedResult(data, count, range.page, range.pageSize, normalizeProject);
 }
 
 export async function reviewProject(projectId, { status, isPublic }) {
@@ -152,13 +155,15 @@ export async function reviewProject(projectId, { status, isPublic }) {
   return normalizeProject(data);
 }
 
-export async function getPublicShowcaseProjects() {
+export async function getPublicShowcaseProjects({ page = 1, pageSize = 12 } = {}) {
+  const range = getPaginationRange(page, pageSize);
   const { data, error } = await requireSupabaseClient()
     .from('projects')
     .select(projectSelect)
     .eq('is_public', true)
     .eq('status', 'showcased')
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .range(range.from, range.to);
 
   if (error) throw error;
   return (data || []).map(normalizeProject);

@@ -9,6 +9,7 @@ import {
 } from '../services/bookingService.js';
 
 const bookingStatuses = ['new', 'contacted', 'booked', 'closed'];
+const PAGE_SIZE = 12;
 
 function formatDate(value) {
   if (!value) return 'Recent';
@@ -18,31 +19,62 @@ function formatDate(value) {
 function AdminBookings() {
   const [bookings, setBookings] = useState([]);
   const [staffOptions, setStaffOptions] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const loadBookings = async () => {
-    setIsLoading(true);
+  const loadBookings = async (nextPage = 1, { append = false, includeStaff = true } = {}) => {
+    append ? setIsLoadingMore(true) : setIsLoading(true);
     setError('');
 
     try {
-      const [nextBookings, nextStaffOptions] = await Promise.all([
-        getAllBookingsForStaff(),
-        getBookingStaffOptions(),
+      const [bookingResult, nextStaffOptions] = await Promise.all([
+        getAllBookingsForStaff({ page: nextPage, pageSize: PAGE_SIZE }),
+        includeStaff ? getBookingStaffOptions() : Promise.resolve(staffOptions),
       ]);
-      setBookings(nextBookings);
+      setBookings((current) => (append ? [...current, ...bookingResult.items] : bookingResult.items));
       setStaffOptions(nextStaffOptions);
+      setPage(bookingResult.page);
+      setHasMore(bookingResult.hasMore);
     } catch (loadError) {
       setError(loadError.message || 'Could not load booking requests.');
     } finally {
-      setIsLoading(false);
+      append ? setIsLoadingMore(false) : setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadBookings();
+    let isMounted = true;
+
+    async function loadInitialBookings() {
+      try {
+        const [bookingResult, nextStaffOptions] = await Promise.all([
+          getAllBookingsForStaff({ page: 1, pageSize: PAGE_SIZE }),
+          getBookingStaffOptions(),
+        ]);
+
+        if (!isMounted) return;
+
+        setBookings(bookingResult.items);
+        setStaffOptions(nextStaffOptions);
+        setPage(bookingResult.page);
+        setHasMore(bookingResult.hasMore);
+      } catch (loadError) {
+        if (isMounted) setError(loadError.message || 'Could not load booking requests.');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadInitialBookings();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleStatusChange = async (bookingId, status) => {
@@ -52,7 +84,7 @@ function AdminBookings() {
 
     try {
       await updateBookingStatus(bookingId, status);
-      await loadBookings();
+      await loadBookings(1);
       setMessage('Booking status updated.');
     } catch (statusError) {
       setError(statusError.message || 'Could not update booking status.');
@@ -68,7 +100,7 @@ function AdminBookings() {
 
     try {
       await assignBooking(bookingId, userId);
-      await loadBookings();
+      await loadBookings(1);
       setMessage('Booking assignment updated.');
     } catch (assignError) {
       setError(assignError.message || 'Could not assign booking.');
@@ -160,6 +192,16 @@ function AdminBookings() {
             </article>
           ))}
         </div>
+        {hasMore ? (
+          <button
+            className="btn btn-outline"
+            type="button"
+            onClick={() => loadBookings(page + 1, { append: true, includeStaff: false })}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? 'Loading...' : 'Load more bookings'}
+          </button>
+        ) : null}
       </div>
     </AppLayout>
   );

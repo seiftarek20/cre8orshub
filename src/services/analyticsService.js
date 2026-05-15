@@ -1,7 +1,7 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
 
 async function safeCount(supabase, table, queryBuilder = (query) => query) {
-  const query = queryBuilder(supabase.from(table).select('*', { count: 'exact', head: true }));
+  const query = queryBuilder(supabase.from(table).select('id', { count: 'exact', head: true }));
   const { count, error } = await query;
 
   if (error) return 0;

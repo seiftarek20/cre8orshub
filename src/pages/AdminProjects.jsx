@@ -4,39 +4,73 @@ import AppLayout from '../components/AppLayout.jsx';
 import { getAllProjectsForStaff, reviewProject } from '../services/projectService.js';
 
 const projectStatuses = ['draft', 'submitted', 'reviewed', 'showcased'];
+const PAGE_SIZE = 12;
 
 function AdminProjects() {
   const [projects, setProjects] = useState([]);
   const [drafts, setDrafts] = useState({});
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const loadProjects = async () => {
-    setIsLoading(true);
+  const mergeDrafts = (nextProjects, shouldReplace = false) => {
+    const nextDrafts = Object.fromEntries(nextProjects.map((project) => [
+      project.id,
+      {
+        status: project.status,
+        isPublic: project.isPublic,
+        staffNote: '',
+      },
+    ]));
+
+    setDrafts((current) => (shouldReplace ? nextDrafts : { ...current, ...nextDrafts }));
+  };
+
+  const loadProjects = async (nextPage = 1, { append = false } = {}) => {
+    append ? setIsLoadingMore(true) : setIsLoading(true);
     setError('');
 
     try {
-      const nextProjects = await getAllProjectsForStaff();
-      setProjects(nextProjects);
-      setDrafts(Object.fromEntries(nextProjects.map((project) => [
-        project.id,
-        {
-          status: project.status,
-          isPublic: project.isPublic,
-          staffNote: '',
-        },
-      ])));
+      const result = await getAllProjectsForStaff({ page: nextPage, pageSize: PAGE_SIZE });
+      setProjects((current) => (append ? [...current, ...result.items] : result.items));
+      mergeDrafts(result.items, !append);
+      setPage(result.page);
+      setHasMore(result.hasMore);
     } catch (loadError) {
       setError(loadError.message || 'Could not load projects.');
     } finally {
-      setIsLoading(false);
+      append ? setIsLoadingMore(false) : setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProjects();
+    let isMounted = true;
+
+    async function loadInitialProjects() {
+      try {
+        const result = await getAllProjectsForStaff({ page: 1, pageSize: PAGE_SIZE });
+        if (!isMounted) return;
+
+        setProjects(result.items);
+        mergeDrafts(result.items, true);
+        setPage(result.page);
+        setHasMore(result.hasMore);
+      } catch (loadError) {
+        if (isMounted) setError(loadError.message || 'Could not load projects.');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadInitialProjects();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const updateDraft = (projectId, field, value) => {
@@ -56,7 +90,7 @@ function AdminProjects() {
 
     try {
       await reviewProject(projectId, drafts[projectId]);
-      await loadProjects();
+      await loadProjects(1);
       setMessage('Project review saved.');
     } catch (reviewError) {
       setError(reviewError.message || 'Could not review project.');
@@ -149,6 +183,16 @@ function AdminProjects() {
             );
           })}
         </div>
+        {hasMore ? (
+          <button
+            className="btn btn-outline"
+            type="button"
+            onClick={() => loadProjects(page + 1, { append: true })}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? 'Loading...' : 'Load more projects'}
+          </button>
+        ) : null}
       </div>
     </AppLayout>
   );
