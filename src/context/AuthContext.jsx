@@ -4,6 +4,26 @@ import { getCurrentSession, signInWithEmail, signOut, signUpWithEmail } from '..
 import { getCurrentUserProfile, updateCurrentUserProfile } from '../services/profileService.js';
 
 const AuthContext = createContext(null);
+const PROFILE_TIMEOUT_MS = 6000;
+
+function buildFallbackProfile(nextUser) {
+  return {
+    id: nextUser.id,
+    full_name: nextUser.user_metadata?.full_name || nextUser.email?.split('@')[0] || '',
+    email: nextUser.email || '',
+    role: 'student',
+    isMissingProfile: true,
+  };
+}
+
+function withTimeout(promise, timeoutMs, message) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+}
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
@@ -19,23 +39,38 @@ export function AuthProvider({ children }) {
       return null;
     }
 
-    const nextProfile = await getCurrentUserProfile(nextUser.id);
+    const nextProfile = await withTimeout(
+      getCurrentUserProfile(nextUser.id),
+      PROFILE_TIMEOUT_MS,
+      'Profile loading timed out.',
+    );
     const safeProfile = nextProfile
       ? {
           ...nextProfile,
           role: nextProfile.role || 'student',
         }
-      : {
-          id: nextUser.id,
-          full_name: nextUser.user_metadata?.full_name || nextUser.email?.split('@')[0] || '',
-          email: nextUser.email || '',
-          role: 'student',
-          isMissingProfile: true,
-        };
+      : buildFallbackProfile(nextUser);
 
     setProfile(safeProfile);
     return safeProfile;
   }, []);
+
+  const loadProfileSafely = useCallback(async (nextUser) => {
+    if (!nextUser) {
+      setProfile(null);
+      return null;
+    }
+
+    try {
+      setAuthError(null);
+      return await loadProfile(nextUser);
+    } catch {
+      const fallbackProfile = buildFallbackProfile(nextUser);
+      setProfile(fallbackProfile);
+      setAuthError('Your profile could not be loaded. Some account features may be limited.');
+      return fallbackProfile;
+    }
+  }, [loadProfile]);
 
   useEffect(() => {
     let isMounted = true;
@@ -55,7 +90,7 @@ export function AuthProvider({ children }) {
 
         setSession(initialSession);
         if (initialSession?.user) {
-          await loadProfile(initialSession.user);
+          void loadProfileSafely(initialSession.user);
         }
       } catch {
         if (isMounted) {
@@ -76,21 +111,14 @@ export function AuthProvider({ children }) {
       };
     }
 
-    const { data } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!isMounted) return;
 
       setSession(nextSession);
       setAuthError(null);
 
       if (nextSession?.user) {
-        try {
-          await loadProfile(nextSession.user);
-        } catch {
-          if (isMounted) {
-            setAuthError('Your profile could not be loaded. Some account features may be limited.');
-            setProfile(null);
-          }
-        }
+        void loadProfileSafely(nextSession.user);
       } else {
         setProfile(null);
       }
@@ -100,23 +128,23 @@ export function AuthProvider({ children }) {
       isMounted = false;
       data.subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfileSafely]);
 
   const login = useCallback(async ({ email, password }) => {
     setAuthError(null);
     const data = await signInWithEmail({ email, password });
     setSession(data.session);
-    if (data.user) await loadProfile(data.user);
+    if (data.user) void loadProfileSafely(data.user);
     return data;
-  }, [loadProfile]);
+  }, [loadProfileSafely]);
 
   const signup = useCallback(async ({ email, password, fullName }) => {
     setAuthError(null);
     const data = await signUpWithEmail({ email, password, fullName });
     setSession(data.session);
-    if (data.user) await loadProfile(data.user);
+    if (data.user) void loadProfileSafely(data.user);
     return data;
-  }, [loadProfile]);
+  }, [loadProfileSafely]);
 
   const logout = useCallback(async () => {
     setAuthError(null);

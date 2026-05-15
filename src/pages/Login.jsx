@@ -3,6 +3,19 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { checkRateLimit } from '../utils/rateLimit.js';
 
+const LOGIN_TIMEOUT_MS = 12000;
+
+function withLoginTimeout(promise) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => {
+      reject(new Error('Login timed out. Please check your connection and try again.'));
+    }, LOGIN_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading, login, authError } = useAuth();
@@ -35,7 +48,10 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      await login(form);
+      const data = await withLoginTimeout(login(form));
+      if (!data?.session) {
+        throw new Error('Login could not be completed. Please try again.');
+      }
       navigate('/dashboard', { replace: true });
     } catch (submissionError) {
       setError(submissionError.message || 'Could not log in. Please try again.');
