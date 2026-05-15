@@ -9,6 +9,7 @@ import {
   toggleTaskPublished,
   updateTask,
 } from '../services/taskService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 const emptyTaskForm = {
   title: '',
@@ -105,9 +106,17 @@ function AdminTasks() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsSaving(true);
     setMessage('');
     setError('');
+
+    const actionKey = editingTaskId ? `admin:task-update:${editingTaskId}` : 'admin:task-create';
+    const rateLimit = checkRateLimit(actionKey, 6000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setIsSaving(true);
 
     try {
       if (editingTaskId) {
@@ -128,9 +137,16 @@ function AdminTasks() {
   };
 
   const handleTogglePublished = async (task) => {
-    setActiveTaskId(task.id);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`admin:task-publish:${task.id}`, 6000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveTaskId(task.id);
 
     try {
       await toggleTaskPublished(task.id, !task.isPublished);
@@ -144,9 +160,16 @@ function AdminTasks() {
   };
 
   const handleArchiveTask = async (task) => {
-    setActiveTaskId(task.id);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`admin:task-archive:${task.id}`, 6000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveTaskId(task.id);
 
     try {
       await archiveTask(task.id);
@@ -277,7 +300,12 @@ function AdminTasks() {
                   </div>
                 </div>
                 <div className="admin-task-row-actions">
-                  <button className="btn btn-outline" type="button" onClick={() => startEditing(task)}>
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => startEditing(task)}
+                    disabled={activeTaskId === task.id || isSaving}
+                  >
                     Edit
                   </button>
                   <button

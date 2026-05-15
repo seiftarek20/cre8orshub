@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { courses } from '../data/courses.js';
 import { createBookingRequest } from '../services/bookingService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 const whatsappNumber = '201002316651';
 
@@ -67,6 +68,15 @@ function Booking() {
       return;
     }
 
+    const rateLimit = checkRateLimit(
+      `booking:${formData.email.trim().toLowerCase()}:${formData.course}`,
+      20000,
+    );
+    if (!rateLimit.allowed) {
+      setErrorMessage(rateLimit.message);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -94,7 +104,7 @@ function Booking() {
         preferredContactTime: '',
         message: '',
       });
-    } catch (error) {
+    } catch {
       setErrorMessage('Could not save the booking request. Opening WhatsApp as a fallback.');
       window.open(buildWhatsappUrl(), '_blank', 'noopener,noreferrer');
     } finally {

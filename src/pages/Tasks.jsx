@@ -9,6 +9,7 @@ import {
   getStudentTasks,
   updateMySubmissionIfAllowed,
 } from '../services/taskService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 function Tasks() {
   const { user } = useAuth();
@@ -98,6 +99,13 @@ function Tasks() {
     if (!activeTask) return;
 
     setSubmissionError('');
+
+    const rateLimit = checkRateLimit(`task-submit:${user?.id || 'guest'}:${activeTask.id}`, 30000);
+    if (!rateLimit.allowed) {
+      setSubmissionError(rateLimit.message);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

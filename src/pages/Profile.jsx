@@ -61,6 +61,11 @@ export default function Profile() {
 
         <article className="app-card reveal">
           <form className="auth-form profile-form" onSubmit={handleSubmit}>
+            {profile?.isMissingProfile ? (
+              <p className="auth-message is-error">
+                Your profile is still being prepared. You can keep using the workspace, but saving profile changes may be limited.
+              </p>
+            ) : null}
             <label>
               Full name
               <input name="full_name" value={form.full_name} onChange={updateField} />

@@ -5,6 +5,7 @@ import {
   getAllTaskSubmissionsForReview,
   updateSubmissionReview,
 } from '../services/submissionService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 const reviewStatuses = ['submitted', 'needs_revision', 'reviewed', 'approved'];
 const PAGE_SIZE = 12;
@@ -87,9 +88,16 @@ function AdminSubmissions() {
   };
 
   const saveReview = async (submissionId) => {
-    setActiveSaveId(submissionId);
     setSaveMessage('');
     setLoadError('');
+
+    const rateLimit = checkRateLimit(`admin:submission-review:${submissionId}`, 6000);
+    if (!rateLimit.allowed) {
+      setLoadError(rateLimit.message);
+      return;
+    }
+
+    setActiveSaveId(submissionId);
 
     try {
       const reviewedSubmission = await updateSubmissionReview(submissionId, drafts[submissionId]);

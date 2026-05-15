@@ -56,6 +56,11 @@ function PaymentInstructions({ courseTitle }) {
         </select>
       </label>
 
+      <section className="payment-section">
+        <p className="app-card-eyebrow">Payment Proof WhatsApp</p>
+        <p>Send proof to: <strong>+201553891910</strong></p>
+      </section>
+
       <button className="btn btn-primary" type="button" onClick={openProofWhatsapp}>
         I Have Paid
       </button>

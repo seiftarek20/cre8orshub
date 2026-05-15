@@ -9,6 +9,7 @@ import {
   getProjectCourses,
   updateMyProject,
 } from '../services/projectService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 const emptyProjectForm = {
   title: '',
@@ -68,6 +69,11 @@ function Projects() {
   };
 
   const startEditing = (project) => {
+    if (!['draft', 'submitted'].includes(project.status) || project.isPublic) {
+      setError('Reviewed projects can no longer be edited.');
+      return;
+    }
+
     setEditingProjectId(project.id);
     setMessage('');
     setError('');
@@ -83,9 +89,17 @@ function Projects() {
 
   const saveProject = async (event) => {
     event.preventDefault();
-    setIsSaving(true);
     setMessage('');
     setError('');
+
+    const actionKey = editingProjectId ? `project:update:${editingProjectId}` : 'project:create';
+    const rateLimit = checkRateLimit(actionKey, 12000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setIsSaving(true);
 
     try {
       if (editingProjectId) {
@@ -106,9 +120,16 @@ function Projects() {
   };
 
   const submitProject = async (project) => {
-    setActiveProjectId(project.id);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`project:submit:${project.id}`, 12000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveProjectId(project.id);
 
     try {
       await updateMyProject(project.id, { ...project, status: 'submitted' });
@@ -122,9 +143,16 @@ function Projects() {
   };
 
   const deleteProject = async (project) => {
-    setActiveProjectId(project.id);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`project:delete:${project.id}`, 12000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveProjectId(project.id);
 
     try {
       await deleteMyProject(project.id);
@@ -239,7 +267,12 @@ function Projects() {
                   </a>
                 ) : null}
                 <div className="admin-task-row-actions">
-                  <button className="btn btn-outline" type="button" onClick={() => startEditing(project)}>
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => startEditing(project)}
+                    disabled={activeProjectId === project.id || !['draft', 'submitted'].includes(project.status) || project.isPublic}
+                  >
                     Edit
                   </button>
                   <button

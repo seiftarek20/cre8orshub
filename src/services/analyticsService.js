@@ -1,4 +1,8 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { CACHE_TTL, getCachedData, makeCacheKey } from '../utils/cache.js';
+
+const ANALYTICS_RECENT_LIMIT = 5;
+const ANALYTICS_CACHE_PREFIX = 'analytics:';
 
 async function safeCount(supabase, table, queryBuilder = (query) => query) {
   const query = queryBuilder(supabase.from(table).select('id', { count: 'exact', head: true }));
@@ -55,77 +59,10 @@ function normalizeProject(project) {
 }
 
 export async function getAdminAnalytics() {
-  const supabase = requireSupabaseClient();
+  return getCachedData(makeCacheKey(ANALYTICS_CACHE_PREFIX, 'summary'), CACHE_TTL.short, async () => {
+    const supabase = requireSupabaseClient();
 
-  const [
-    totalUsers,
-    totalBookingRequests,
-    totalTasks,
-    totalSubmissions,
-    approvedSubmissions,
-    totalProjects,
-    showcasedProjects,
-    rewardPointsRows,
-    latestBookingRequests,
-    latestSubmissions,
-    latestProjects,
-  ] = await Promise.all([
-    safeCount(supabase, 'profiles'),
-    safeCount(supabase, 'booking_requests'),
-    safeCount(supabase, 'tasks'),
-    safeCount(supabase, 'task_submissions'),
-    safeCount(supabase, 'task_submissions', (query) => query.in('status', ['approved', 'reviewed'])),
-    safeCount(supabase, 'projects'),
-    safeCount(supabase, 'projects', (query) => query.eq('is_public', true).eq('status', 'showcased')),
-    safeList(supabase.from('reward_points').select('points')),
-    safeList(
-      supabase
-        .from('booking_requests')
-        .select('id, full_name, email, course_slug, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      normalizeBooking,
-    ),
-    safeList(
-      supabase
-        .from('task_submissions')
-        .select(`
-          id,
-          status,
-          submitted_at,
-          tasks (
-            title
-          ),
-          profiles!task_submissions_student_id_fkey (
-            full_name,
-            email
-          )
-        `)
-        .order('submitted_at', { ascending: false })
-        .limit(5),
-      normalizeSubmission,
-    ),
-    safeList(
-      supabase
-        .from('projects')
-        .select(`
-          id,
-          title,
-          status,
-          updated_at,
-          profiles!projects_student_id_fkey (
-            full_name,
-            email
-          )
-        `)
-        .order('updated_at', { ascending: false })
-        .limit(5),
-      normalizeProject,
-    ),
-  ]);
-
-  return {
-    stats: {
+    const [
       totalUsers,
       totalBookingRequests,
       totalTasks,
@@ -133,10 +70,79 @@ export async function getAdminAnalytics() {
       approvedSubmissions,
       totalProjects,
       showcasedProjects,
-      totalRewardPointsAwarded: rewardPointsRows.reduce((total, row) => total + Number(row.points || 0), 0),
-    },
-    latestBookingRequests,
-    latestSubmissions,
-    latestProjects,
-  };
+      rewardPointsRows,
+      latestBookingRequests,
+      latestSubmissions,
+      latestProjects,
+    ] = await Promise.all([
+      safeCount(supabase, 'profiles'),
+      safeCount(supabase, 'booking_requests'),
+      safeCount(supabase, 'tasks'),
+      safeCount(supabase, 'task_submissions'),
+      safeCount(supabase, 'task_submissions', (query) => query.in('status', ['approved', 'reviewed'])),
+      safeCount(supabase, 'projects'),
+      safeCount(supabase, 'projects', (query) => query.eq('is_public', true).eq('status', 'showcased')),
+      safeList(supabase.from('reward_points').select('points')),
+      safeList(
+        supabase
+          .from('booking_requests')
+          .select('id, full_name, email, course_slug, status, created_at')
+          .order('created_at', { ascending: false })
+          .limit(ANALYTICS_RECENT_LIMIT),
+        normalizeBooking,
+      ),
+      safeList(
+        supabase
+          .from('task_submissions')
+          .select(`
+            id,
+            status,
+            submitted_at,
+            tasks (
+              title
+            ),
+            profiles!task_submissions_student_id_fkey (
+              full_name,
+              email
+            )
+          `)
+          .order('submitted_at', { ascending: false })
+          .limit(ANALYTICS_RECENT_LIMIT),
+        normalizeSubmission,
+      ),
+      safeList(
+        supabase
+          .from('projects')
+          .select(`
+            id,
+            title,
+            status,
+            updated_at,
+            profiles!projects_student_id_fkey (
+              full_name,
+              email
+            )
+          `)
+          .order('updated_at', { ascending: false })
+          .limit(ANALYTICS_RECENT_LIMIT),
+        normalizeProject,
+      ),
+    ]);
+
+    return {
+      stats: {
+        totalUsers,
+        totalBookingRequests,
+        totalTasks,
+        totalSubmissions,
+        approvedSubmissions,
+        totalProjects,
+        showcasedProjects,
+        totalRewardPointsAwarded: rewardPointsRows.reduce((total, row) => total + Number(row.points || 0), 0),
+      },
+      latestBookingRequests,
+      latestSubmissions,
+      latestProjects,
+    };
+  });
 }

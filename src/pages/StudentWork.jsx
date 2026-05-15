@@ -14,7 +14,7 @@ function StudentWork() {
       try {
         const showcasedProjects = await getPublicShowcaseProjects();
         if (isMounted) setProjects(showcasedProjects);
-      } catch (error) {
+      } catch {
         if (isMounted) setProjects([]);
       } finally {
         if (isMounted) setIsLoading(false);

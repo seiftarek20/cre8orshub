@@ -1,10 +1,24 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { CACHE_TTL, getCachedData, invalidateCaches, makeCacheKey } from '../utils/cache.js';
+import { sanitizeLongText, sanitizeText, toSafeSupabaseError } from '../utils/security.js';
 import {
   createTaskSubmission,
   getMyTaskSubmissions,
   getSubmissionByTask,
   updateMySubmissionIfAllowed,
 } from './submissionService.js';
+
+const TASK_CACHE_PREFIX = 'tasks:';
+const COURSE_CACHE_PREFIX = 'courses:';
+const ANALYTICS_CACHE_PREFIX = 'analytics:';
+
+function invalidateTaskCaches() {
+  invalidateCaches([
+    TASK_CACHE_PREFIX,
+    COURSE_CACHE_PREFIX,
+    ANALYTICS_CACHE_PREFIX,
+  ]);
+}
 
 function normalizeStatus(status) {
   if (!status) return 'Open';
@@ -80,28 +94,40 @@ function normalizeCourse(course) {
 }
 
 function parseRequirements(requirements) {
-  if (Array.isArray(requirements)) {
-    return requirements.map((item) => String(item).trim()).filter(Boolean);
-  }
-
-  return String(requirements || '')
-    .split('\n')
-    .map((item) => item.trim())
+  const items = Array.isArray(requirements) ? requirements : String(requirements || '').split('\n');
+  return items
+    .map((item) => sanitizeText(item, { maxLength: 240 }))
     .filter(Boolean);
 }
 
 function buildTaskPayload(task) {
+  const points = Number(task.points);
+  const dueDays = Number(task.dueDaysAfterEnrollment);
+
+  if (!Number.isFinite(points) || points < 0 || points > 10000) {
+    throw new Error('Task points must be a valid number.');
+  }
+
+  if (
+    task.dueDaysAfterEnrollment !== '' &&
+    task.dueDaysAfterEnrollment !== null &&
+    task.dueDaysAfterEnrollment !== undefined &&
+    (!Number.isFinite(dueDays) || dueDays < 0 || dueDays > 365)
+  ) {
+    throw new Error('Due days must be between 0 and 365.');
+  }
+
   return {
-    title: task.title?.trim(),
-    description: task.description?.trim() || null,
+    title: sanitizeText(task.title, { maxLength: 140, required: true, label: 'Task title' }),
+    description: sanitizeLongText(task.description, { maxLength: 2000 }) || null,
     requirements: parseRequirements(task.requirementsText ?? task.requirements),
-    points: Number(task.points) || 0,
-    course_id: task.courseId || task.course_id,
-    lesson_id: task.lessonId || task.lesson_id || null,
+    points,
+    course_id: sanitizeText(task.courseId || task.course_id, { maxLength: 80, required: true, label: 'Course' }),
+    lesson_id: sanitizeText(task.lessonId || task.lesson_id, { maxLength: 80 }) || null,
     due_days_after_enrollment:
       task.dueDaysAfterEnrollment === '' || task.dueDaysAfterEnrollment === null || task.dueDaysAfterEnrollment === undefined
         ? null
-        : Number(task.dueDaysAfterEnrollment),
+        : dueDays,
     is_published: Boolean(task.isPublished ?? task.is_published),
   };
 }
@@ -109,47 +135,53 @@ function buildTaskPayload(task) {
 export async function getStudentTasks(userId) {
   if (!userId) return [];
 
-  const supabase = requireSupabaseClient();
-  const { data, error } = await supabase
-    .from('tasks')
-    .select(`
-      id,
-      title,
-      description,
-      requirements,
-      points,
-      due_days_after_enrollment,
-      courses (
-        title,
-        level
-      ),
-      task_submissions (
+  return getCachedData(makeCacheKey(TASK_CACHE_PREFIX, 'published', userId), CACHE_TTL.standard, async () => {
+    const supabase = requireSupabaseClient();
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(`
         id,
-        submission_text,
-        file_url,
-        status,
-        feedback,
-        score,
-        submitted_at,
-        reviewed_at
-      )
-    `)
-    .eq('is_published', true)
-    .order('points', { ascending: false });
+        title,
+        description,
+        requirements,
+        points,
+        due_days_after_enrollment,
+        courses (
+          title,
+          level
+        ),
+        task_submissions (
+          id,
+          student_id,
+          submission_text,
+          file_url,
+          status,
+          feedback,
+          score,
+          submitted_at,
+          reviewed_at
+        )
+      `)
+      .eq('is_published', true)
+      .eq('task_submissions.student_id', userId)
+      .order('points', { ascending: false });
 
-  if (error) throw error;
-  return (data || []).map(normalizeTask);
+    if (error) throw toSafeSupabaseError(error, 'Could not load tasks.');
+    return (data || []).map(normalizeTask);
+  });
 }
 
 export async function getTaskCoursesForStaff() {
-  const supabase = requireSupabaseClient();
-  const { data, error } = await supabase
-    .from('courses')
-    .select('id, title, slug')
-    .order('sort_order', { ascending: true });
+  return getCachedData(makeCacheKey(COURSE_CACHE_PREFIX, 'task-options'), CACHE_TTL.public, async () => {
+    const supabase = requireSupabaseClient();
+    const { data, error } = await supabase
+      .from('courses')
+      .select('id, title, slug')
+      .order('sort_order', { ascending: true });
 
-  if (error) throw error;
-  return (data || []).map(normalizeCourse);
+    if (error) throw toSafeSupabaseError(error, 'Could not load course options.');
+    return (data || []).map(normalizeCourse);
+  });
 }
 
 export async function getAllTasksForStaff() {
@@ -177,7 +209,7 @@ export async function getAllTasksForStaff() {
     `)
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not create task.');
   return (data || []).map(normalizeStaffTask);
 }
 
@@ -207,7 +239,8 @@ export async function createTask(task) {
     `)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not update task.');
+  invalidateTaskCaches();
   return normalizeStaffTask(data);
 }
 
@@ -238,7 +271,8 @@ export async function updateTask(taskId, task) {
     `)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not archive task.');
+  invalidateTaskCaches();
   return normalizeStaffTask(data);
 }
 
@@ -269,7 +303,8 @@ export async function archiveTask(taskId) {
     `)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not delete task.');
+  invalidateTaskCaches();
   return normalizeStaffTask(data);
 }
 
@@ -280,7 +315,8 @@ export async function deleteTask(taskId) {
     .delete()
     .eq('id', taskId);
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not update task visibility.');
+  invalidateTaskCaches();
 }
 
 export async function toggleTaskPublished(taskId, isPublished) {
@@ -310,7 +346,8 @@ export async function toggleTaskPublished(taskId, isPublished) {
     `)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not load tasks.');
+  invalidateTaskCaches();
   return normalizeStaffTask(data);
 }
 

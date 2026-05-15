@@ -20,8 +20,21 @@ export function AuthProvider({ children }) {
     }
 
     const nextProfile = await getCurrentUserProfile(nextUser.id);
-    setProfile(nextProfile);
-    return nextProfile;
+    const safeProfile = nextProfile
+      ? {
+          ...nextProfile,
+          role: nextProfile.role || 'student',
+        }
+      : {
+          id: nextUser.id,
+          full_name: nextUser.user_metadata?.full_name || nextUser.email?.split('@')[0] || '',
+          email: nextUser.email || '',
+          role: 'student',
+          isMissingProfile: true,
+        };
+
+    setProfile(safeProfile);
+    return safeProfile;
   }, []);
 
   useEffect(() => {
@@ -44,8 +57,12 @@ export function AuthProvider({ children }) {
         if (initialSession?.user) {
           await loadProfile(initialSession.user);
         }
-      } catch (error) {
-        if (isMounted) setAuthError(error.message);
+      } catch {
+        if (isMounted) {
+          setSession(null);
+          setProfile(null);
+          setAuthError('Your session could not be restored. Please log in again.');
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -68,9 +85,9 @@ export function AuthProvider({ children }) {
       if (nextSession?.user) {
         try {
           await loadProfile(nextSession.user);
-        } catch (error) {
+        } catch {
           if (isMounted) {
-            setAuthError(error.message);
+            setAuthError('Your profile could not be loaded. Some account features may be limited.');
             setProfile(null);
           }
         }

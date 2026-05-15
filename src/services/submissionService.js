@@ -1,5 +1,29 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { invalidateCaches } from '../utils/cache.js';
 import { buildPaginatedResult, getPaginationRange } from '../utils/pagination.js';
+import {
+  sanitizeLongText,
+  sanitizeOptionalUrl,
+  sanitizeScore,
+  sanitizeText,
+  toSafeSupabaseError,
+  validateChoice,
+} from '../utils/security.js';
+
+const USER_SUBMISSION_LIMIT = 24;
+const TASK_CACHE_PREFIX = 'tasks:';
+const REWARD_CACHE_PREFIX = 'rewards:';
+const ANALYTICS_CACHE_PREFIX = 'analytics:';
+const SUBMISSION_STATUSES = ['submitted', 'needs_revision', 'reviewed', 'approved'];
+const EDITABLE_SUBMISSION_STATUSES = ['submitted', 'needs_revision'];
+
+function invalidateSubmissionRelatedCaches() {
+  invalidateCaches([
+    TASK_CACHE_PREFIX,
+    REWARD_CACHE_PREFIX,
+    ANALYTICS_CACHE_PREFIX,
+  ]);
+}
 
 const submissionSelect = `
   id,
@@ -81,7 +105,8 @@ async function awardEligibleBadges(supabase, studentId) {
     .from('student_badges')
     .insert(missingBadges);
 
-  if (insertError) throw insertError;
+  if (insertError?.code === '23505') return;
+  if (insertError) throw toSafeSupabaseError(insertError, 'Could not award badge.');
 }
 
 async function awardSubmissionRewardsIfNeeded(supabase, submission) {
@@ -115,7 +140,7 @@ async function awardSubmissionRewardsIfNeeded(supabase, submission) {
         note: `Task approved: ${task?.title || 'Task submission'}`,
       });
 
-    if (rewardError) throw rewardError;
+    if (rewardError) throw toSafeSupabaseError(rewardError, 'Could not award reward points.');
     didCreateReward = true;
   }
 
@@ -153,31 +178,70 @@ export async function createTaskSubmission(taskId, submissionText, projectUrl = 
 
   if (userError) throw userError;
   if (!userData.user) throw new Error('You must be logged in to submit a task.');
+  const cleanTaskId = sanitizeText(taskId, { maxLength: 80, required: true, label: 'Task' });
+  const cleanSubmissionText = sanitizeLongText(submissionText, {
+    maxLength: 3000,
+    required: true,
+    label: 'Submission text',
+  });
+  const cleanFileUrl = sanitizeOptionalUrl(fileUrl || projectUrl, { label: 'Project link' });
+
+  const { data: task, error: taskError } = await supabase
+    .from('tasks')
+    .select('id, is_published')
+    .eq('id', cleanTaskId)
+    .eq('is_published', true)
+    .maybeSingle();
+
+  if (taskError) throw toSafeSupabaseError(taskError, 'Could not verify this task.');
+  if (!task) throw new Error('This task is no longer available for submission.');
+
+  const { data: existingSubmission, error: existingError } = await supabase
+    .from('task_submissions')
+    .select('id, status')
+    .eq('task_id', cleanTaskId)
+    .eq('student_id', userData.user.id)
+    .maybeSingle();
+
+  if (existingError) throw toSafeSupabaseError(existingError, 'Could not check your existing submission.');
+  if (existingSubmission) {
+    throw new Error(
+      EDITABLE_SUBMISSION_STATUSES.includes(existingSubmission.status)
+        ? 'You already submitted this task. Please update the existing submission.'
+        : 'This task submission has already been reviewed.',
+    );
+  }
 
   const { data, error } = await supabase
     .from('task_submissions')
     .insert({
-      task_id: taskId,
+      task_id: cleanTaskId,
       student_id: userData.user.id,
-      submission_text: submissionText.trim(),
-      file_url: (fileUrl || projectUrl || '').trim() || null,
+      submission_text: cleanSubmissionText,
+      file_url: cleanFileUrl,
       status: 'submitted',
     })
     .select(submissionSelect)
     .single();
 
-  if (error) throw error;
+  if (error?.code === '23505') {
+    throw new Error('You already submitted this task.');
+  }
+  if (error) throw toSafeSupabaseError(error, 'Could not submit task.');
+  invalidateSubmissionRelatedCaches();
   return normalizeSubmission(data);
 }
 
-export async function getMyTaskSubmissions() {
+export async function getMyTaskSubmissions({ limit = USER_SUBMISSION_LIMIT } = {}) {
+  const safeLimit = Math.max(Number(limit) || USER_SUBMISSION_LIMIT, 1);
   const supabase = requireSupabaseClient();
   const { data, error } = await supabase
     .from('task_submissions')
     .select(submissionSelect)
-    .order('submitted_at', { ascending: false });
+    .order('submitted_at', { ascending: false })
+    .range(0, safeLimit - 1);
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not load submissions.');
   return (data || []).map(normalizeSubmission);
 }
 
@@ -189,26 +253,50 @@ export async function getSubmissionByTask(taskId) {
     .eq('task_id', taskId)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not load this submission.');
   return data ? normalizeSubmission(data) : null;
 }
 
 export async function updateMySubmissionIfAllowed(submissionId, updates) {
+  const supabase = requireSupabaseClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!userData.user) throw new Error('You must be logged in to update a submission.');
+
   const payload = {
-    submission_text: updates.submissionText?.trim() || null,
-    file_url: updates.projectUrl?.trim() || updates.fileUrl?.trim() || null,
+    submission_text: sanitizeLongText(updates.submissionText, {
+      maxLength: 3000,
+      required: true,
+      label: 'Submission text',
+    }),
+    file_url: sanitizeOptionalUrl(updates.projectUrl || updates.fileUrl, { label: 'Project link' }),
   };
 
-  const supabase = requireSupabaseClient();
+  const { data: existingSubmission, error: existingError } = await supabase
+    .from('task_submissions')
+    .select('id, status')
+    .eq('id', submissionId)
+    .eq('student_id', userData.user.id)
+    .maybeSingle();
+
+  if (existingError) throw toSafeSupabaseError(existingError, 'Could not check your submission.');
+  if (!existingSubmission) throw new Error('This submission is no longer available.');
+  if (!EDITABLE_SUBMISSION_STATUSES.includes(existingSubmission.status)) {
+    throw new Error('This submission has already been reviewed and can no longer be edited.');
+  }
+
   const { data, error } = await supabase
     .from('task_submissions')
     .update(payload)
     .eq('id', submissionId)
+    .eq('student_id', userData.user.id)
     .in('status', ['submitted', 'needs_revision'])
     .select(submissionSelect)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not update submission.');
+  invalidateSubmissionRelatedCaches();
   return normalizeSubmission(data);
 }
 
@@ -221,19 +309,28 @@ export async function getAllTaskSubmissionsForReview({ page = 1, pageSize = 12 }
     .order('submitted_at', { ascending: false })
     .range(range.from, range.to);
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not load submissions for review.');
   return buildPaginatedResult(data, count, range.page, range.pageSize, normalizeSubmission);
 }
 
 export async function updateSubmissionReview(submissionId, { status, feedback, score }) {
   const payload = {
-    status,
-    feedback: feedback?.trim() || null,
-    score: score === '' || score === null || score === undefined ? null : Number(score),
+    status: validateChoice(status, SUBMISSION_STATUSES, { label: 'Submission status' }),
+    feedback: sanitizeLongText(feedback, { maxLength: 2000 }) || null,
+    score: sanitizeScore(score),
     reviewed_at: new Date().toISOString(),
   };
 
   const supabase = requireSupabaseClient();
+  const { data: existingSubmission, error: existingError } = await supabase
+    .from('task_submissions')
+    .select('id, status')
+    .eq('id', submissionId)
+    .maybeSingle();
+
+  if (existingError) throw toSafeSupabaseError(existingError, 'Could not check this submission.');
+  if (!existingSubmission) throw new Error('This submission is no longer available for review.');
+
   const { data, error } = await supabase
     .from('task_submissions')
     .update(payload)
@@ -241,8 +338,14 @@ export async function updateSubmissionReview(submissionId, { status, feedback, s
     .select(submissionSelect)
     .single();
 
-  if (error) throw error;
-  const rewardsUpdated = await awardSubmissionRewardsIfNeeded(supabase, data);
+  if (error) throw toSafeSupabaseError(error, 'Could not save review.');
+  let rewardsUpdated;
+
+  try {
+    rewardsUpdated = await awardSubmissionRewardsIfNeeded(supabase, data);
+  } finally {
+    invalidateSubmissionRelatedCaches();
+  }
 
   return {
     ...normalizeSubmission(data),

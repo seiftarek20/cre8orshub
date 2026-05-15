@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -26,6 +27,13 @@ export default function Signup() {
     event.preventDefault();
     setError('');
     setMessage('');
+
+    const rateLimit = checkRateLimit(`auth:signup:${form.email.trim().toLowerCase()}`, 12000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

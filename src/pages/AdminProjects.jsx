@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AppCard from '../components/AppCard.jsx';
 import AppLayout from '../components/AppLayout.jsx';
 import { getAllProjectsForStaff, reviewProject } from '../services/projectService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 const projectStatuses = ['draft', 'submitted', 'reviewed', 'showcased'];
 const PAGE_SIZE = 12;
@@ -84,9 +85,16 @@ function AdminProjects() {
   };
 
   const saveReview = async (projectId) => {
-    setActiveProjectId(projectId);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`admin:project-review:${projectId}`, 6000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveProjectId(projectId);
 
     try {
       await reviewProject(projectId, drafts[projectId]);

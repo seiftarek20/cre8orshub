@@ -1,4 +1,7 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { CACHE_TTL, getCachedData, makeCacheKey } from '../utils/cache.js';
+
+const REWARD_CACHE_PREFIX = 'rewards:';
 
 function normalizeBadge(studentBadge) {
   const badge = Array.isArray(studentBadge.badges) ? studentBadge.badges[0] : studentBadge.badges;
@@ -29,39 +32,41 @@ export async function getStudentRewards(userId) {
     };
   }
 
-  const supabase = requireSupabaseClient();
+  return getCachedData(makeCacheKey(REWARD_CACHE_PREFIX, userId), CACHE_TTL.standard, async () => {
+    const supabase = requireSupabaseClient();
 
-  const [pointsResponse, badgesResponse] = await Promise.all([
-    supabase
-      .from('reward_points')
-      .select('id, points, note, source_type, created_at')
-      .eq('student_id', userId)
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('student_badges')
-      .select(`
-        id,
-        awarded_at,
-        badges (
-          title,
-          description,
-          criteria
-        )
-      `)
-      .eq('student_id', userId)
-      .order('awarded_at', { ascending: false }),
-  ]);
+    const [pointsResponse, badgesResponse] = await Promise.all([
+      supabase
+        .from('reward_points')
+        .select('id, points, note, source_type, created_at')
+        .eq('student_id', userId)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('student_badges')
+        .select(`
+          id,
+          awarded_at,
+          badges (
+            title,
+            description,
+            criteria
+          )
+        `)
+        .eq('student_id', userId)
+        .order('awarded_at', { ascending: false }),
+    ]);
 
-  if (pointsResponse.error) throw pointsResponse.error;
-  if (badgesResponse.error) throw badgesResponse.error;
+    if (pointsResponse.error) throw pointsResponse.error;
+    if (badgesResponse.error) throw badgesResponse.error;
 
-  const points = pointsResponse.data || [];
-  const badges = (badgesResponse.data || []).map(normalizeBadge);
+    const points = pointsResponse.data || [];
+    const badges = (badgesResponse.data || []).map(normalizeBadge);
 
-  return {
-    points,
-    badges,
-    activity: points.slice(0, 4).map(normalizeActivity),
-    totalPoints: points.reduce((total, point) => total + (point.points || 0), 0),
-  };
+    return {
+      points,
+      badges,
+      activity: points.slice(0, 4).map(normalizeActivity),
+      totalPoints: points.reduce((total, point) => total + (point.points || 0), 0),
+    };
+  });
 }

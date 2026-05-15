@@ -7,6 +7,7 @@ import {
   getBookingStaffOptions,
   updateBookingStatus,
 } from '../services/bookingService.js';
+import { checkRateLimit } from '../utils/rateLimit.js';
 
 const bookingStatuses = ['new', 'contacted', 'booked', 'closed'];
 const PAGE_SIZE = 12;
@@ -78,9 +79,16 @@ function AdminBookings() {
   }, []);
 
   const handleStatusChange = async (bookingId, status) => {
-    setActiveBookingId(bookingId);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`admin:booking-status:${bookingId}`, 6000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveBookingId(bookingId);
 
     try {
       await updateBookingStatus(bookingId, status);
@@ -94,9 +102,16 @@ function AdminBookings() {
   };
 
   const handleAssign = async (bookingId, userId) => {
-    setActiveBookingId(bookingId);
     setMessage('');
     setError('');
+
+    const rateLimit = checkRateLimit(`admin:booking-assign:${bookingId}`, 6000);
+    if (!rateLimit.allowed) {
+      setError(rateLimit.message);
+      return;
+    }
+
+    setActiveBookingId(bookingId);
 
     try {
       await assignBooking(bookingId, userId);

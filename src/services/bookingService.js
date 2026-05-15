@@ -1,5 +1,18 @@
 import { requireSupabaseClient } from '../lib/supabaseClient.js';
+import { invalidateCachePrefix } from '../utils/cache.js';
 import { buildPaginatedResult, getPaginationRange } from '../utils/pagination.js';
+import {
+  sanitizeEmail,
+  sanitizeLongText,
+  sanitizeText,
+  toSafeSupabaseError,
+  validateChoice,
+} from '../utils/security.js';
+
+const ANALYTICS_CACHE_PREFIX = 'analytics:';
+const BOOKING_STATUSES = ['new', 'contacted', 'booked', 'closed'];
+const DUPLICATE_BOOKING_WINDOW_MS = 15000;
+const recentBookingAttempts = new Map();
 
 const bookingSelect = `
   id,
@@ -44,24 +57,46 @@ function normalizeBooking(booking) {
 
 function buildBookingPayload(data) {
   return {
-    full_name: data.full_name?.trim() || data.fullName?.trim(),
-    email: data.email?.trim(),
-    phone: data.phone?.trim() || null,
-    course_slug: data.course_slug || data.courseSlug || null,
-    preferred_mode: data.preferred_mode || data.preferredMode || null,
-    message: data.message?.trim() || null,
-    status: data.status || 'new',
+    full_name: sanitizeText(data.full_name || data.fullName, { maxLength: 120, required: true, label: 'Name' }),
+    email: sanitizeEmail(data.email),
+    phone: sanitizeText(data.phone, { maxLength: 40 }) || null,
+    course_slug: sanitizeText(data.course_slug || data.courseSlug, { maxLength: 80 }) || null,
+    preferred_mode: sanitizeText(data.preferred_mode || data.preferredMode, { maxLength: 80 }) || null,
+    message: sanitizeLongText(data.message, { maxLength: 1200 }) || null,
+    status: validateChoice(data.status || 'new', BOOKING_STATUSES, { label: 'Booking status' }),
   };
+}
+
+function getBookingSignature(payload) {
+  return [
+    payload.email,
+    payload.phone || '',
+    payload.course_slug || '',
+    payload.preferred_mode || '',
+  ].join('|');
 }
 
 export async function createBookingRequest(data) {
   const supabase = requireSupabaseClient();
   const payload = buildBookingPayload(data);
+  const signature = getBookingSignature(payload);
+  const now = Date.now();
+  const lastAttemptAt = recentBookingAttempts.get(signature) || 0;
+
+  if (now - lastAttemptAt < DUPLICATE_BOOKING_WINDOW_MS) {
+    throw new Error('This booking request was already sent. Please wait a moment before trying again.');
+  }
+
+  recentBookingAttempts.set(signature, now);
   const { error } = await supabase
     .from('booking_requests')
     .insert(payload);
 
-  if (error) throw error;
+  if (error) {
+    recentBookingAttempts.delete(signature);
+    throw toSafeSupabaseError(error, 'Could not save the booking request.');
+  }
+  invalidateCachePrefix(ANALYTICS_CACHE_PREFIX);
   return payload;
 }
 
@@ -74,33 +109,37 @@ export async function getAllBookingsForStaff({ page = 1, pageSize = 12 } = {}) {
     .order('created_at', { ascending: false })
     .range(range.from, range.to);
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not load booking requests.');
   return buildPaginatedResult(data, count, range.page, range.pageSize, normalizeBooking);
 }
 
 export async function updateBookingStatus(id, status) {
+  const nextStatus = validateChoice(status, BOOKING_STATUSES, { label: 'Booking status' });
   const supabase = requireSupabaseClient();
   const { data, error } = await supabase
     .from('booking_requests')
-    .update({ status })
+    .update({ status: nextStatus })
     .eq('id', id)
     .select(bookingSelect)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not update booking status.');
+  invalidateCachePrefix(ANALYTICS_CACHE_PREFIX);
   return normalizeBooking(data);
 }
 
 export async function assignBooking(id, userId) {
+  const assigneeId = sanitizeText(userId, { maxLength: 80 }) || null;
   const supabase = requireSupabaseClient();
   const { data, error } = await supabase
     .from('booking_requests')
-    .update({ assigned_to: userId || null })
+    .update({ assigned_to: assigneeId })
     .eq('id', id)
     .select(bookingSelect)
     .single();
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not assign booking.');
+  invalidateCachePrefix(ANALYTICS_CACHE_PREFIX);
   return normalizeBooking(data);
 }
 
@@ -112,7 +151,7 @@ export async function getBookingStaffOptions() {
     .in('role', ['admin', 'instructor'])
     .order('full_name', { ascending: true });
 
-  if (error) throw error;
+  if (error) throw toSafeSupabaseError(error, 'Could not load staff options.');
   return (data || []).map((profile) => ({
     id: profile.id,
     name: profile.full_name || profile.email || 'Staff member',
